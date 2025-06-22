@@ -1,0 +1,204 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@/theme';
+
+// Screens
+import HomeScreen from '../screens/HomeScreen';
+import RecognitionScreen from '../screens/RecognitionScreen';
+import UsersScreen from '../screens/UsersScreen';
+import StatisticsScreen from '../screens/StatisticsScreen';
+import AlertsScreen from '../screens/AlertsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+// Stack Navigator para cada sección
+function HomeStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.primary,
+                },
+                headerTintColor: colors.surface,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            <Stack.Screen
+                name="Home"
+                component={HomeScreen}
+                options={{ title: 'Dashboard' }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function RecognitionStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.primary,
+                },
+                headerTintColor: colors.surface,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            <Stack.Screen
+                name="Recognition"
+                component={RecognitionScreen}
+                options={{ title: 'Reconocimiento' }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function UsersStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.primary,
+                },
+                headerTintColor: colors.surface,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            <Stack.Screen
+                name="Users"
+                component={UsersScreen}
+                options={{ title: 'Usuarios' }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function StatisticsStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.primary,
+                },
+                headerTintColor: colors.surface,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            <Stack.Screen
+                name="Statistics"
+                component={StatisticsScreen}
+                options={{ title: 'Estadísticas' }}
+            />
+            <Stack.Screen
+                name="Alerts"
+                component={AlertsScreen}
+                options={{ title: 'Alertas' }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+// Tab Navigator Principal
+function TabNavigator() {
+    return (
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                tabBarIcon: ({ focused, color, size }) => {
+                    let iconName: keyof typeof Ionicons.glyphMap;
+
+                    switch (route.name) {
+                        case 'HomeTab':
+                            iconName = focused ? 'home' : 'home-outline';
+                            break;
+                        case 'RecognitionTab':
+                            iconName = focused ? 'camera' : 'camera-outline';
+                            break;
+                        case 'UsersTab':
+                            iconName = focused ? 'people' : 'people-outline';
+                            break;
+                        case 'StatsTab':
+                            iconName = focused ? 'analytics' : 'analytics-outline';
+                            break;
+                        case 'SettingsTab':
+                            iconName = focused ? 'settings' : 'settings-outline';
+                            break;
+                        default:
+                            iconName = 'circle-outline';
+                    }
+
+                    return <Ionicons name={iconName} size={size} color={color} />;
+                },
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textLight,
+                tabBarStyle: {
+                    backgroundColor: colors.surface,
+                    borderTopColor: colors.border,
+                    paddingBottom: 8,
+                    height: 60,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    fontWeight: '600',
+                },
+                headerShown: false,
+            })}
+        >
+            <Tab.Screen
+                name="HomeTab"
+                component={HomeStack}
+                options={{ title: 'Inicio' }}
+            />
+            <Tab.Screen
+                name="RecognitionTab"
+                component={RecognitionStack}
+                options={{ title: 'Reconocer' }}
+            />
+            <Tab.Screen
+                name="UsersTab"
+                component={UsersStack}
+                options={{ title: 'Usuarios' }}
+            />
+            <Tab.Screen
+                name="StatsTab"
+                component={StatisticsStack}
+                options={{ title: 'Reportes' }}
+            />
+            <Tab.Screen
+                name="SettingsTab"
+                component={SettingsScreen}
+                options={{
+                    title: 'Config',
+                    headerShown: true,
+                    headerStyle: {
+                        backgroundColor: colors.primary,
+                    },
+                    headerTintColor: colors.surface,
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                    },
+                }}
+            />
+        </Tab.Navigator>
+    );
+}
+
+// Navegador Principal
+export default function AppNavigator() {
+    return (
+        <NavigationContainer>
+            <TabNavigator />
+        </NavigationContainer>
+    );
+}
