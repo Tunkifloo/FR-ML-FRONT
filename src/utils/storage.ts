@@ -82,7 +82,7 @@ export const clearAll = async (): Promise<boolean> => {
 /**
  * Obtiene todas las claves almacenadas
  */
-export const getAllKeys = async (): Promise<string[]> => {
+export const getAllKeys = async (): Promise<readonly string[]> => {
     try {
         const keys = await AsyncStorage.getAllKeys();
         return keys;
@@ -98,7 +98,7 @@ export const getAllKeys = async (): Promise<string[]> => {
 export const getStorageInfo = async (): Promise<{
     totalKeys: number;
     totalSize: number;
-    keys: string[];
+    keys: readonly string[];
 }> => {
     try {
         const keys = await getAllKeys();

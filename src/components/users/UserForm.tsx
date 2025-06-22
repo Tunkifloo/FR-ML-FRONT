@@ -128,7 +128,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'] as ImagePicker.MediaTypeOptions[],
+                mediaTypes: 'images' as const,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
@@ -216,6 +216,14 @@ export const UserForm: React.FC<UserFormProps> = ({
         );
     };
 
+    // Función helper para obtener el estilo del input con error
+    const getInputStyle = (hasError: boolean) => {
+        return [
+            globalStyles.input,
+            hasError ? { borderColor: colors.secondary } : undefined
+        ].filter(Boolean);
+    };
+
     return (
         <ScrollView style={globalStyles.content}>
             {loading && <Loading message="Guardando usuario..." />}
@@ -225,7 +233,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <View style={globalStyles.marginBottom16}>
                     <Text style={globalStyles.inputLabel}>Nombre *</Text>
                     <TextInput
-                        style={[globalStyles.input, errors.nombre && { borderColor: colors.secondary }]}
+                        style={getInputStyle(!!errors.nombre)}
                         value={formData.nombre}
                         onChangeText={(value) => handleInputChange('nombre', value)}
                         placeholder="Ingresa el nombre"
@@ -243,7 +251,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <View style={globalStyles.marginBottom16}>
                     <Text style={globalStyles.inputLabel}>Apellido *</Text>
                     <TextInput
-                        style={[globalStyles.input, errors.apellido && { borderColor: colors.secondary }]}
+                        style={getInputStyle(!!errors.apellido)}
                         value={formData.apellido}
                         onChangeText={(value) => handleInputChange('apellido', value)}
                         placeholder="Ingresa el apellido"
@@ -261,7 +269,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <View style={globalStyles.marginBottom16}>
                     <Text style={globalStyles.inputLabel}>Email *</Text>
                     <TextInput
-                        style={[globalStyles.input, errors.email && { borderColor: colors.secondary }]}
+                        style={getInputStyle(!!errors.email)}
                         value={formData.email}
                         onChangeText={(value) => handleInputChange('email', value)}
                         placeholder="ejemplo@correo.com"
@@ -281,7 +289,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <View style={globalStyles.marginBottom16}>
                     <Text style={globalStyles.inputLabel}>ID Estudiante (Opcional)</Text>
                     <TextInput
-                        style={[globalStyles.input, errors.id_estudiante && { borderColor: colors.secondary }]}
+                        style={getInputStyle(!!errors.id_estudiante)}
                         value={formData.id_estudiante}
                         onChangeText={(value) => handleInputChange('id_estudiante', value)}
                         placeholder="EST001"

@@ -69,7 +69,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     if (!permission.granted) {
         return (
             <View style={styles.permissionContainer}>
-                <Ionicons name="camera-off" size={48} color={colors.surface} />
+                <Ionicons name="camera-outline" size={48} color={colors.surface} />
                 <Text style={[typography.h4, { color: colors.surface, marginTop: 16 }]}>
                     Sin acceso a la cámara
                 </Text>
