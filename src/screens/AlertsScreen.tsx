@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { AlertBanner } from '@/components/recognition/AlertBanner';
-import { RecognitionService } from '@/services/recognitionService';
-import { AlertaSeguridad } from '@/types/recognition';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { ErrorMessage } from '../components/common/ErrorMessage';
+import { AlertBanner } from '../components/recognition/AlertBanner';
+import { RecognitionService } from '../services/recognitionService';
+import { AlertaSeguridad } from '../types/recognition';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
 
-export default function AlertsScreen() {
+export default function AlertsScreen(): JSX.Element {
     const [alerts, setAlerts] = useState<AlertaSeguridad[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -65,7 +65,7 @@ export default function AlertsScreen() {
                 <Text style={[typography.h4, globalStyles.marginTop16]}>
                     Sin Alertas
                 </Text>
-                <Text style={[typography.body2, globalStyles.marginTop8]}>
+                <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
                     No se han generado alertas de seguridad
                 </Text>
             </View>

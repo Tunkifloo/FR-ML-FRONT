@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { globalStyles}  from '@/theme';
+import { globalStyles } from '../../theme/styles';
 import { typography } from '../../theme/typography';
-import { colors } from '@/theme';
+import { colors } from '../../theme/colors';
 
 interface ErrorMessageProps {
     message: string;

@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { RecognitionResult } from '@/types/recognition';
+import { RecognitionResult } from '../../types/recognition';
 import { Card } from '../common/Card';
 import { AlertBanner } from './AlertBanner';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { globalStyles } from '../../theme/styles';
+import { typography } from '../../theme/typography';
+import { colors } from '../../theme/colors';
 
 interface ResultCardProps {
     result: RecognitionResult;
@@ -20,7 +20,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, imageUri }) => {
         return colors.secondary;
     };
 
-    const getStatusIcon = (recognized: boolean) => {
+    const getStatusIcon = (recognized: boolean): keyof typeof Ionicons.glyphMap => {
         return recognized ? 'checkmark-circle' : 'close-circle';
     };
 

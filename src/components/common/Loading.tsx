@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { globalStyles } from '@/theme';
-import { colors } from '@/theme';
+import { globalStyles } from '../../theme/styles';
+import { colors } from '../../theme/colors';
 
 interface LoadingProps {
     message?: string;

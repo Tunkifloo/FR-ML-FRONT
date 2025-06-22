@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
-import { Camera, CameraType, FlashMode } from 'expo-camera';
+import { Camera, CameraView as ExpoCameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
-import { globalStyles}  from '@/theme/styles';
-import { typography } from '@/theme/typography';
-import { colors } from '@/theme/colors';
+import { globalStyles } from '../../theme/styles';
+import { typography } from '../../theme/typography';
+import { colors } from '../../theme/colors';
 
 interface CameraViewProps {
     onCapture: (imageUri: string) => void;
@@ -19,18 +19,17 @@ export const CameraView: React.FC<CameraViewProps> = ({
                                                           onClose,
                                                           isProcessing = false
                                                       }) => {
-    const [type, setType] = useState(CameraType.back);
-    const [flash, setFlash] = useState(FlashMode.off);
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [facing, setFacing] = useState<'front' | 'back'>('back');
+    const [flash, setFlash] = useState<'on' | 'off'>('off');
+    const [permission, requestPermission] = useCameraPermissions();
     const [isReady, setIsReady] = useState(false);
-    const cameraRef = useRef<Camera>(null);
+    const cameraRef = useRef<ExpoCameraView>(null);
 
     useEffect(() => {
-        (async () => {
-            const { status } = await Camera.requestCameraPermissionsAsync();
-            setHasPermission(status === 'granted');
-        })();
-    }, []);
+        if (!permission?.granted) {
+            requestPermission();
+        }
+    }, [permission, requestPermission]);
 
     const takePicture = async () => {
         if (cameraRef.current && isReady && !isProcessing) {
@@ -40,26 +39,24 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     base64: false,
                     skipProcessing: false,
                 });
-                onCapture(photo.uri);
+                if (photo) {
+                    onCapture(photo.uri);
+                }
             } catch (error) {
                 console.error('Error taking picture:', error);
             }
         }
     };
 
-    const toggleCameraType = () => {
-        setType(current =>
-            current === CameraType.back ? CameraType.front : CameraType.back
-        );
+    const toggleCameraFacing = () => {
+        setFacing(current => (current === 'back' ? 'front' : 'back'));
     };
 
     const toggleFlash = () => {
-        setFlash(current =>
-            current === FlashMode.off ? FlashMode.on : FlashMode.off
-        );
+        setFlash(current => (current === 'off' ? 'on' : 'off'));
     };
 
-    if (hasPermission === null) {
+    if (!permission) {
         return (
             <View style={styles.permissionContainer}>
                 <Text style={[typography.body1, { color: colors.surface }]}>
@@ -69,7 +66,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         );
     }
 
-    if (hasPermission === false) {
+    if (!permission.granted) {
         return (
             <View style={styles.permissionContainer}>
                 <Ionicons name="camera-off" size={48} color={colors.surface} />
@@ -93,10 +90,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
     return (
         <View style={styles.container}>
-            <Camera
+            <ExpoCameraView
                 style={styles.camera}
-                type={type}
-                flashMode={flash}
+                facing={facing}
+                flash={flash}
                 ref={cameraRef}
                 onCameraReady={() => setIsReady(true)}
             >
@@ -118,7 +115,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                         onPress={toggleFlash}
                     >
                         <Ionicons
-                            name={flash === FlashMode.on ? "flash" : "flash-off"}
+                            name={flash === 'on' ? "flash" : "flash-off"}
                             size={24}
                             color={colors.surface}
                         />
@@ -131,10 +128,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     <View style={styles.middleRow}>
                         <View style={styles.sideOverlay} />
                         <View style={styles.faceFrame}>
-                            <View style={styles.corner} style={[styles.corner, styles.topLeft]} />
-                            <View style={styles.corner} style={[styles.corner, styles.topRight]} />
-                            <View style={styles.corner} style={[styles.corner, styles.bottomLeft]} />
-                            <View style={styles.corner} style={[styles.corner, styles.bottomRight]} />
+                            <View style={[styles.corner, styles.topLeft]} />
+                            <View style={[styles.corner, styles.topRight]} />
+                            <View style={[styles.corner, styles.bottomLeft]} />
+                            <View style={[styles.corner, styles.bottomRight]} />
                         </View>
                         <View style={styles.sideOverlay} />
                     </View>
@@ -152,7 +149,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                             {/* Cambiar cámara */}
                             <TouchableOpacity
                                 style={styles.controlButton}
-                                onPress={toggleCameraType}
+                                onPress={toggleCameraFacing}
                                 disabled={isProcessing}
                             >
                                 <Ionicons
@@ -197,7 +194,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                         </View>
                     </View>
                 </View>
-            </Camera>
+            </ExpoCameraView>
         </View>
     );
 };

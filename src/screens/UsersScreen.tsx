@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { UserCard } from '@/components/users/UserCard';
-import { UserService } from '@/services/userService';
-import { Usuario } from '@/types/user';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { ErrorMessage } from '../components/common/ErrorMessage';
+import { UserCard } from '../components/users/UserCard';
+import { UserService } from '../services/userService';
+import { Usuario } from '../types/user';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
 
-export default function UsersScreen() {
+export default function UsersScreen(): JSX.Element {
     const [users, setUsers] = useState<Usuario[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -111,6 +111,26 @@ export default function UsersScreen() {
         </Card>
     );
 
+    const renderEmpty = () => (
+        <Card>
+            <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
+                <Ionicons name="people" size={48} color={colors.textLight} />
+                <Text style={[typography.h4, globalStyles.marginTop16]}>
+                    Sin usuarios
+                </Text>
+                <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
+                    No hay usuarios registrados en el sistema
+                </Text>
+                <TouchableOpacity
+                    style={[globalStyles.primaryButton, globalStyles.marginTop16]}
+                    onPress={() => {/* Navigate to add user */}}
+                >
+                    <Text style={globalStyles.buttonText}>Añadir Usuario</Text>
+                </TouchableOpacity>
+            </View>
+        </Card>
+    );
+
     if (loading && users.length === 0) {
         return <Loading message="Cargando usuarios..." />;
     }
@@ -129,6 +149,7 @@ export default function UsersScreen() {
                     renderItem={renderUser}
                     keyExtractor={(item) => item.id.toString()}
                     ListHeaderComponent={renderHeader}
+                    ListEmptyComponent={!loading ? renderEmpty : null}
                     contentContainerStyle={globalStyles.paddingHorizontal16}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

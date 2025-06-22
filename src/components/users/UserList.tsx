@@ -9,15 +9,45 @@ import {
     Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
+import { Card } from '../common/Card';
+import { Loading } from '../common/Loading';
+import { ErrorMessage } from '../common/ErrorMessage';
 import { UserCard } from './UserCard';
-import { UserService } from '@/services/userService';
-import { Usuario } from '@/types/user';
-import { globalStyles, colors, typography } from '@/theme';
-import { handleApiError, debounce } from '@/utils/helpers';
-import { UI_CONFIG } from '@/utils/constants';
+import { UserService } from '../../services/userService';
+import { Usuario } from '../../types/user';
+import { globalStyles } from '../../theme/styles';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
+
+// Funciones helper
+const handleApiError = (error: any): string => {
+    if (!error) return 'Error del servidor';
+
+    if (error.response) {
+        const message = error.response.data?.detail || error.response.data?.message;
+        return message || 'Error del servidor';
+    }
+
+    return error.message || 'Error del servidor';
+};
+
+const debounce = <T extends (...args: any[]) => any>(
+    func: T,
+    waitMs: number
+): ((...args: Parameters<T>) => void) => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    return (...args: Parameters<T>) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func(...args), waitMs);
+    };
+};
+
+const UI_CONFIG = {
+    PAGINATION: {
+        DEFAULT_PAGE_SIZE: 20,
+    },
+};
 
 interface UserListProps {
     onUserPress?: (user: Usuario) => void;
@@ -275,7 +305,12 @@ export const UserList: React.FC<UserListProps> = ({
                         </View>
 
                         <TouchableOpacity
-                            style={[globalStyles.controlButton, { marginLeft: 12 }]}
+                            style={[{
+                                padding: 8,
+                                marginLeft: 12,
+                                borderRadius: 8,
+                                backgroundColor: colors.border
+                            }]}
                             onPress={() => setShowFilters(!showFilters)}
                         >
                             <Ionicons

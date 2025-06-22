@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import { UserService } from '@/services/userService';
-import { RecognitionService } from '@/services/recognitionService';
-import { EstadoEntrenamiento, ModelInfo } from '@/types/recognition';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { UserService } from '../services/userService';
+import { RecognitionService } from '../services/recognitionService';
+import { EstadoEntrenamiento, ModelInfo } from '../types';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
 
-export default function SettingsScreen() {
+export default function SettingsScreen(): JSX.Element {
     const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
     const [trainingStatus, setTrainingStatus] = useState<EstadoEntrenamiento | null>(null);
     const [loading, setLoading] = useState(false);

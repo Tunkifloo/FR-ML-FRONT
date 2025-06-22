@@ -1,35 +1,33 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '../components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { ResultCard } from '@/components/recognition/ResultCard';
-import { RecognitionService } from '@/services/recognitionService';
-import { RecognitionResult } from '@/types/recognition';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { ErrorMessage } from '../components/common/ErrorMessage';
+import { ResultCard } from '../components/recognition/ResultCard';
+import { RecognitionService } from '../services/recognitionService';
+import { RecognitionResult } from '../types/recognition';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
 
-
-export default function RecognitionScreen() {
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [type, setType] = useState(CameraType.back);
+export default function RecognitionScreen(): JSX.Element {
+    const [permission, requestPermission] = useCameraPermissions();
+    const [facing, setFacing] = useState<'front' | 'back'>('back');
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [result, setResult] = useState<RecognitionResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const cameraRef = useRef<Camera>(null);
+    const cameraRef = useRef<CameraView>(null);
 
     React.useEffect(() => {
-        (async () => {
-            const { status } = await Camera.requestCameraPermissionsAsync();
-            setHasPermission(status === 'granted');
-        })();
-    }, []);
+        if (!permission?.granted) {
+            requestPermission();
+        }
+    }, [permission, requestPermission]);
 
     const takePicture = async () => {
         if (cameraRef.current) {
@@ -38,8 +36,10 @@ export default function RecognitionScreen() {
                     quality: 0.8,
                     base64: false,
                 });
-                setImageUri(photo.uri);
-                await processImage(photo.uri);
+                if (photo) {
+                    setImageUri(photo.uri);
+                    await processImage(photo.uri);
+                }
             } catch (err) {
                 setError('Error al tomar la foto');
             }
@@ -94,11 +94,11 @@ export default function RecognitionScreen() {
         setError(null);
     };
 
-    if (hasPermission === null) {
+    if (!permission) {
         return <Loading message="Solicitando permisos de cámara..." />;
     }
 
-    if (hasPermission === false) {
+    if (!permission.granted) {
         return (
             <SafeAreaView style={globalStyles.safeArea}>
                 <View style={globalStyles.container}>
@@ -118,9 +118,9 @@ export default function RecognitionScreen() {
                 {!imageUri && !loading && (
                     <View style={globalStyles.flex1}>
                         {/* Vista de Cámara */}
-                        <Camera
+                        <CameraView
                             style={globalStyles.flex1}
-                            type={type}
+                            facing={facing}
                             ref={cameraRef}
                         >
                             <View style={{
@@ -177,15 +177,15 @@ export default function RecognitionScreen() {
                                             padding: 15,
                                             borderRadius: 30,
                                         }}
-                                        onPress={() => setType(
-                                            type === CameraType.back ? CameraType.front : CameraType.back
+                                        onPress={() => setFacing(
+                                            facing === 'back' ? 'front' : 'back'
                                         )}
                                     >
                                         <Ionicons name="camera-reverse" size={24} color={colors.primary} />
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                        </Camera>
+                        </CameraView>
                     </View>
                 )}
 

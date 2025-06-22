@@ -39,26 +39,33 @@ export class UserService {
         return response.data;
     }
 
-    // Listar usuarios
+    // Listar usuarios con filtros opcionales
     static async getUsers(
         pagina: number = 1,
         itemsPorPagina: number = 20,
-        filters?: {
+        filters: {
             nombre?: string;
             apellido?: string;
             email?: string;
             requisitoriado?: boolean;
             activo?: boolean;
-        }
+        } = {}
     ): Promise<ResponsePaginado<Usuario>> {
-        const params = new URLSearchParams({
-            pagina: pagina.toString(),
-            items_por_pagina: itemsPorPagina.toString(),
-            incluir_imagen: 'true',
-            ...filters,
+        const params = new URLSearchParams();
+
+        // Parámetros básicos
+        params.append('pagina', pagina.toString());
+        params.append('items_por_pagina', itemsPorPagina.toString());
+        params.append('incluir_imagen', 'true');
+
+        // Agregar filtros si existen
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                params.append(key, value.toString());
+            }
         });
 
-        const response = await apiService.axiosInstance.get(`/usuarios/?${params}`);
+        const response = await apiService.axiosInstance.get(`/usuarios/?${params.toString()}`);
         return response.data;
     }
 
@@ -68,13 +75,12 @@ export class UserService {
         incluirImagenes: boolean = true,
         incluirReconocimientos: boolean = false
     ): Promise<ResponseWithData<Usuario>> {
-        const params = new URLSearchParams({
-            incluir_imagenes: incluirImagenes.toString(),
-            incluir_reconocimientos: incluirReconocimientos.toString(),
-        });
+        const params = new URLSearchParams();
+        params.append('incluir_imagenes', incluirImagenes.toString());
+        params.append('incluir_reconocimientos', incluirReconocimientos.toString());
 
         const response = await apiService.axiosInstance.get(
-            `/usuarios/estudiante/${idEstudiante}?${params}`
+            `/usuarios/estudiante/${idEstudiante}?${params.toString()}`
         );
         return response.data;
     }
@@ -100,11 +106,10 @@ export class UserService {
         usuarioId: number,
         eliminarDefinitivo: boolean = false
     ): Promise<ResponseWithData> {
-        const params = new URLSearchParams({
-            eliminar_definitivo: eliminarDefinitivo.toString(),
-        });
+        const params = new URLSearchParams();
+        params.append('eliminar_definitivo', eliminarDefinitivo.toString());
 
-        const response = await apiService.axiosInstance.delete(`/usuarios/${usuarioId}?${params}`);
+        const response = await apiService.axiosInstance.delete(`/usuarios/${usuarioId}?${params.toString()}`);
         return response.data;
     }
 

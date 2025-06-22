@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ViewStyle, TextStyle } from 'react-native';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
+import { globalStyles } from '../../theme/styles';
+import { typography } from '../../theme/typography';
 import { colors } from '../../theme/colors';
 
 interface CardProps {
@@ -16,7 +16,7 @@ export const Card: React.FC<CardProps> = ({ title, children, style, titleStyle }
         <View style={[globalStyles.card, style]}>
             {title && (
                 <View style={globalStyles.cardHeader}>
-                    <Text style={[typography.h4, titleStyle]}>{title}</Text>
+                    <Text style={[typography.h4, { color: colors.text }, titleStyle]}>{title}</Text>
                 </View>
             )}
             {children}

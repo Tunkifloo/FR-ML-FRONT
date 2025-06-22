@@ -3,18 +3,25 @@ import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Dimensions } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { RecognitionService } from '@/services/recognitionService';
-import { EstadisticasReconocimiento } from '@/types/recognition';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { ErrorMessage } from '../components/common/ErrorMessage';
+import { RecognitionService } from '../services/recognitionService';
+import { EstadisticasReconocimiento } from '../types/recognition';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
+
+// Tipos de navegación
+interface NavigationProps {
+    navigation: {
+        navigate: (screenName: string) => void;
+    };
+}
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function StatisticsScreen({ navigation }: any) {
+export default function StatisticsScreen({ navigation }: NavigationProps): JSX.Element {
     const [stats, setStats] = useState<EstadisticasReconocimiento | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -53,11 +60,16 @@ export default function StatisticsScreen({ navigation }: any) {
         style: {
             borderRadius: 16,
         },
+        propsForDots: {
+            r: "6",
+            strokeWidth: "2",
+            stroke: colors.primary
+        }
     };
 
     // Preparar datos para gráficos
     const getWeeklyData = () => {
-        if (!stats) return { labels: [], datasets: [{ data: [] }] };
+        if (!stats) return { labels: [], datasets: [{ data: [0] }] };
 
         const dailyStats = stats.por_dia;
         const last7Days = Object.keys(dailyStats)
@@ -68,6 +80,10 @@ export default function StatisticsScreen({ navigation }: any) {
                 total: dailyStats[date].total,
                 exitosos: dailyStats[date].exitosos,
             }));
+
+        if (last7Days.length === 0) {
+            return { labels: ['Sin datos'], datasets: [{ data: [0] }] };
+        }
 
         return {
             labels: last7Days.map(day => new Date(day.date).getDate().toString()),

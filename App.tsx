@@ -15,10 +15,38 @@ const paperTheme = {
         disabled: colors.textLight,
         placeholder: colors.textSecondary,
         backdrop: 'rgba(0, 0, 0, 0.5)',
+        // Colores adicionales requeridos por react-native-paper v5
+        onPrimary: colors.surface,
+        onSecondary: colors.surface,
+        onSurface: colors.text,
+        onBackground: colors.text,
+        outline: colors.border,
+        inverseSurface: colors.text,
+        inverseOnSurface: colors.surface,
+        inversePrimary: colors.surface,
+        shadow: colors.text,
+        scrim: colors.text,
+        surfaceVariant: colors.background,
+        onSurfaceVariant: colors.textSecondary,
+        outlineVariant: colors.border,
+        error: colors.secondary,
+        onError: colors.surface,
+        errorContainer: colors.secondary,
+        onErrorContainer: colors.surface,
+        primaryContainer: colors.primary,
+        onPrimaryContainer: colors.surface,
+        secondaryContainer: colors.secondary,
+        onSecondaryContainer: colors.surface,
+        tertiary: colors.info,
+        onTertiary: colors.surface,
+        tertiaryContainer: colors.info,
+        onTertiaryContainer: colors.surface,
+        surfaceDisabled: colors.border,
+        onSurfaceDisabled: colors.textLight,
     },
 };
 
-export default function App() {
+export default function App(): JSX.Element {
     return (
         <PaperProvider theme={paperTheme}>
             <StatusBar style="light" backgroundColor={colors.primary} />

@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { UserService } from '@/services/userService';
-import { RecognitionService } from '@/services/recognitionService';
+import { Card } from '../components/common/Card';
+import { Loading } from '../components/common/Loading';
+import { ErrorMessage } from '../components/common/ErrorMessage';
+import { UserService } from '../services/userService';
+import { RecognitionService } from '../services/recognitionService';
 import { EstadisticasUsuarios, ModelInfo, EstadoEntrenamiento } from '../types';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
+import { globalStyles } from '../theme/styles';
+import { typography } from '../theme/typography';
+import { colors } from '../theme/colors';
 
-
-export default function HomeScreen() {
+export default function HomeScreen(): JSX.Element {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [userStats, setUserStats] = useState<EstadisticasUsuarios | null>(null);
@@ -93,7 +92,7 @@ export default function HomeScreen() {
                                     Modelo {modelInfo?.model_loaded ? 'Activo' : 'Inactivo'}
                                 </Text>
                             </View>
-                            {!modelInfo?.model_loaded && trainingStatus?.total_persons >= 2 && (
+                            {!modelInfo?.model_loaded && trainingStatus && trainingStatus.total_persons >= 2 && (
                                 <TouchableOpacity
                                     style={globalStyles.primaryButton}
                                     onPress={handleTrainModel}

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/theme';
+import { colors } from '../theme/colors';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -13,8 +13,23 @@ import StatisticsScreen from '../screens/StatisticsScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+// Tipos para navegación
+export type RootStackParamList = {
+    HomeTab: undefined;
+    RecognitionTab: undefined;
+    UsersTab: undefined;
+    StatsTab: undefined;
+    SettingsTab: undefined;
+    Home: undefined;
+    Recognition: undefined;
+    Users: undefined;
+    Statistics: undefined;
+    Alerts: undefined;
+    Settings: undefined;
+};
+
+const Tab = createBottomTabNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
 // Stack Navigator para cada sección
 function HomeStack() {
@@ -110,34 +125,43 @@ function StatisticsStack() {
     );
 }
 
+// Función helper para obtener el nombre del icono
+function getTabBarIcon(
+    routeName: string,
+    focused: boolean
+): keyof typeof Ionicons.glyphMap {
+    let iconName: keyof typeof Ionicons.glyphMap;
+
+    switch (routeName) {
+        case 'HomeTab':
+            iconName = focused ? 'home' : 'home-outline';
+            break;
+        case 'RecognitionTab':
+            iconName = focused ? 'camera' : 'camera-outline';
+            break;
+        case 'UsersTab':
+            iconName = focused ? 'people' : 'people-outline';
+            break;
+        case 'StatsTab':
+            iconName = focused ? 'analytics' : 'analytics-outline';
+            break;
+        case 'SettingsTab':
+            iconName = focused ? 'settings' : 'settings-outline';
+            break;
+        default:
+            iconName = 'ellipse-outline';
+    }
+
+    return iconName;
+}
+
 // Tab Navigator Principal
 function TabNavigator() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
-                    let iconName: keyof typeof Ionicons.glyphMap;
-
-                    switch (route.name) {
-                        case 'HomeTab':
-                            iconName = focused ? 'home' : 'home-outline';
-                            break;
-                        case 'RecognitionTab':
-                            iconName = focused ? 'camera' : 'camera-outline';
-                            break;
-                        case 'UsersTab':
-                            iconName = focused ? 'people' : 'people-outline';
-                            break;
-                        case 'StatsTab':
-                            iconName = focused ? 'analytics' : 'analytics-outline';
-                            break;
-                        case 'SettingsTab':
-                            iconName = focused ? 'settings' : 'settings-outline';
-                            break;
-                        default:
-                            iconName = 'circle-outline';
-                    }
-
+                    const iconName = getTabBarIcon(route.name, focused);
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: colors.primary,
@@ -195,7 +219,7 @@ function TabNavigator() {
 }
 
 // Navegador Principal
-export default function AppNavigator() {
+export default function AppNavigator(): JSX.Element {
     return (
         <NavigationContainer>
             <TabNavigator />

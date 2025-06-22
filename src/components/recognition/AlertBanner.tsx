@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AlertaSeguridad } from '@/types/recognition';
-import { globalStyles}  from '@/theme';
-import { typography } from '@/theme';
-import { colors } from '@/theme';
-
+import { AlertaSeguridad } from '../../types/recognition';
+import { globalStyles } from '../../theme/styles';
+import { typography } from '../../theme/typography';
+import { colors } from '../../theme/colors';
 
 interface AlertBannerProps {
     alert: AlertaSeguridad;
@@ -22,7 +21,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({ alert, onDismiss }) =>
         }
     };
 
-    const getAlertIcon = (level: string) => {
+    const getAlertIcon = (level: string): keyof typeof Ionicons.glyphMap => {
         switch (level) {
             case 'HIGH': return 'warning';
             case 'MEDIUM': return 'alert-circle';

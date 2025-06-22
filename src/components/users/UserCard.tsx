@@ -1,10 +1,40 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Usuario } from '@/types/user';
+import { Usuario } from '../../types/user';
 import { Card } from '../common/Card';
-import { globalStyles, colors, typography } from '@/theme';
-import { getInitials, formatRelativeDate } from '@/utils/helpers';
+import { globalStyles } from '../../theme/styles';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
+
+// Funciones helper que faltaban
+const getInitials = (firstName: string, lastName: string): string => {
+    const first = firstName.charAt(0).toUpperCase();
+    const last = lastName.charAt(0).toUpperCase();
+    return first + last;
+};
+
+const formatRelativeDate = (dateString: string): string => {
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Hoy';
+        if (diffDays === 1) return 'Ayer';
+        if (diffDays < 7) return `Hace ${diffDays} días`;
+        if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+    } catch {
+        return 'Fecha inválida';
+    }
+};
 
 interface UserCardProps {
     user: Usuario;

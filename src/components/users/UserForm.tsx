@@ -2,13 +2,50 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Card  } from '@/components/common/Card';
-import {  Loading } from '@/components/common/Loading';
-import {  ErrorMessage } from '@/components/common/ErrorMessage';
-import { UsuarioCreate } from '@/types/user';
-import { globalStyles, colors, typography } from '@/theme';
-import { isValidEmail, isValidName, capitalizeWords, handleApiError } from '@/utils/helpers';
-import { USER_LIMITS } from '@/utils/constants';
+import { Card } from '../common/Card';
+import { Loading } from '../common/Loading';
+import { ErrorMessage } from '../common/ErrorMessage';
+import { UsuarioCreate } from '../../types/user';
+import { globalStyles } from '../../theme/styles';
+import { colors } from '../../theme/colors';
+import { typography } from '../../theme/typography';
+
+// Constantes y funciones helper
+const USER_LIMITS = {
+    MIN_IMAGES: 1,
+    MAX_IMAGES: 5,
+    NAME_MIN_LENGTH: 2,
+    NAME_MAX_LENGTH: 50,
+    EMAIL_MAX_LENGTH: 100,
+};
+
+const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+const isValidName = (name: string): boolean => {
+    return name.trim().length >= USER_LIMITS.NAME_MIN_LENGTH && name.trim().length <= USER_LIMITS.NAME_MAX_LENGTH;
+};
+
+const capitalizeWords = (text: string): string => {
+    return text
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const handleApiError = (error: any): string => {
+    if (!error) return 'Error del servidor';
+
+    if (error.response) {
+        const message = error.response.data?.detail || error.response.data?.message;
+        return message || 'Error del servidor';
+    }
+
+    return error.message || 'Error del servidor';
+};
 
 interface UserFormProps {
     initialData?: Partial<UsuarioCreate>;
@@ -71,7 +108,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleInputChange = (field: keyof typeof formData, value: string) => {
+    const handleInputChange = (field: 'nombre' | 'apellido' | 'email' | 'id_estudiante', value: string) => {
         setFormData(prev => ({
             ...prev,
             [field]: field === 'nombre' || field === 'apellido' ? capitalizeWords(value) : value,
@@ -91,7 +128,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ['images'] as ImagePicker.MediaTypeOptions[],
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,

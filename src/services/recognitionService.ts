@@ -1,7 +1,6 @@
 import { apiService } from './api';
 import {
     ResponseWithData,
-    ResponsePaginado,
     RecognitionResult,
     HistorialReconocimiento,
     EstadisticasReconocimiento,
@@ -35,12 +34,12 @@ export class RecognitionService {
     static async getRecognitionHistory(
         pagina: number = 1,
         itemsPorPagina: number = 20,
-        filters?: {
+        filters: {
             usuario_id?: number;
             reconocido?: boolean;
             alerta_generada?: boolean;
             confianza_minima?: number;
-        }
+        } = {}
     ): Promise<ResponseWithData<{
         reconocimientos: HistorialReconocimiento[];
         paginacion: {
@@ -50,23 +49,29 @@ export class RecognitionService {
             total_paginas: number;
         };
     }>> {
-        const params = new URLSearchParams({
-            pagina: pagina.toString(),
-            items_por_pagina: itemsPorPagina.toString(),
-            ...filters,
+        const params = new URLSearchParams();
+
+        // Parámetros básicos
+        params.append('pagina', pagina.toString());
+        params.append('items_por_pagina', itemsPorPagina.toString());
+
+        // Agregar filtros si existen
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                params.append(key, value.toString());
+            }
         });
 
-        const response = await apiService.axiosInstance.get(`/reconocimiento/historial?${params}`);
+        const response = await apiService.axiosInstance.get(`/reconocimiento/historial?${params.toString()}`);
         return response.data;
     }
 
     // Obtener estadísticas de reconocimientos
     static async getRecognitionStatistics(dias: number = 30): Promise<ResponseWithData<EstadisticasReconocimiento>> {
-        const params = new URLSearchParams({
-            dias: dias.toString(),
-        });
+        const params = new URLSearchParams();
+        params.append('dias', dias.toString());
 
-        const response = await apiService.axiosInstance.get(`/reconocimiento/estadisticas?${params}`);
+        const response = await apiService.axiosInstance.get(`/reconocimiento/estadisticas?${params.toString()}`);
         return response.data;
     }
 
@@ -85,12 +90,14 @@ export class RecognitionService {
         filtro_nivel?: string;
         alertas: AlertaSeguridad[];
     }>> {
-        const params = new URLSearchParams({
-            limite: limite.toString(),
-            ...(nivel && { nivel }),
-        });
+        const params = new URLSearchParams();
+        params.append('limite', limite.toString());
 
-        const response = await apiService.axiosInstance.get(`/reconocimiento/alertas/historial?${params}`);
+        if (nivel) {
+            params.append('nivel', nivel);
+        }
+
+        const response = await apiService.axiosInstance.get(`/reconocimiento/alertas/historial?${params.toString()}`);
         return response.data;
     }
 }
