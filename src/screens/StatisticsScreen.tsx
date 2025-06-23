@@ -117,7 +117,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                         <ErrorMessage message={error} onRetry={loadAlertStatistics} />
                     )}
 
-                    {/* Herramientas en Desarrollo */}
+                    {/* MENSAJE: Estadísticas Generales en Desarrollo */}
                     <Card>
                         <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                             <Ionicons name="construct" size={24} color={colors.warning} />
@@ -127,20 +127,27 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                         <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
                             <Ionicons name="build" size={48} color={colors.textLight} />
                             <Text style={[typography.h4, globalStyles.marginTop16]}>
-                                🚧 En Desarrollo
+                                🚧 Herramienta en Desarrollo
                             </Text>
                             <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
                                 Las estadísticas completas de reconocimiento están siendo desarrolladas.
                                 Por ahora puedes ver las estadísticas de alertas de seguridad.
                             </Text>
+                            <Text style={[typography.caption, globalStyles.marginTop8, { textAlign: 'center', fontStyle: 'italic' }]}>
+                                Endpoint /reconocimiento/estadisticas no está operativo
+                            </Text>
                         </View>
                     </Card>
 
-                    {/* Estadísticas de Alertas */}
+                    {/* Estadísticas de Alertas - SOLO ESTAS ESTÁN OPERATIVAS */}
                     {alertStats && (
                         <>
                             {/* Resumen de Alertas */}
-                            <Card title="Resumen de Alertas de Seguridad">
+                            <Card title="📊 Estadísticas de Alertas de Seguridad">
+                                <Text style={[typography.caption, { color: colors.success, marginBottom: 16, fontWeight: 'bold' }]}>
+                                    ✅ Endpoint operativo: /reconocimiento/alertas/estadisticas
+                                </Text>
+
                                 <View style={[globalStyles.row, globalStyles.spaceBetween]}>
                                     <View style={globalStyles.alignCenter}>
                                         <Text style={[typography.h2, { color: colors.secondary }]}>
@@ -185,7 +192,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
 
                             {/* Distribución por Nivel de Alerta */}
                             {getAlertLevelDistribution().length > 0 && (
-                                <Card title="Distribución por Nivel">
+                                <Card title="Distribución por Nivel de Alerta">
                                     <PieChart
                                         data={getAlertLevelDistribution()}
                                         width={screenWidth - 64}
@@ -205,7 +212,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
 
                             {/* Distribución por Tipo de Requisitoria */}
                             {getRequisitionTypeDistribution().length > 0 && (
-                                <Card title="Tipos de Requisitorias">
+                                <Card title="Distribución por Tipo de Requisitoria">
                                     <PieChart
                                         data={getRequisitionTypeDistribution()}
                                         width={screenWidth - 64}
@@ -223,8 +230,8 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                 </Card>
                             )}
 
-                            {/* Desglose por Tipo */}
-                            <Card title="Desglose por Tipo de Requisitoria">
+                            {/* Desglose Detallado por Tipo */}
+                            <Card title="Desglose Detallado por Tipo de Requisitoria">
                                 {Object.entries(alertStats.by_requisition_type).map(([type, count], index) => (
                                     <View
                                         key={type}
@@ -247,7 +254,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                                 {count}
                                             </Text>
                                             <Text style={typography.caption}>
-                                                {((count / alertStats.total_alerts) * 100).toFixed(1)}%
+                                                {alertStats.total_alerts > 0 ? ((count / alertStats.total_alerts) * 100).toFixed(1) : '0.0'}%
                                             </Text>
                                         </View>
                                     </View>
@@ -262,7 +269,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                             <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
                                 <Ionicons name="shield-checkmark" size={48} color={colors.success} />
                                 <Text style={[typography.h4, globalStyles.marginTop16]}>
-                                    Sin Alertas
+                                    Sin Alertas de Seguridad
                                 </Text>
                                 <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
                                     No se han generado alertas de seguridad. El sistema está funcionando normalmente.
@@ -285,12 +292,23 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                     </TouchableOpacity>
 
                     {/* Información sobre Estadísticas Completas */}
-                    <Card title="Próximamente">
+                    <Card title="🔮 Próximamente - Estadísticas Completas">
                         <View style={[globalStyles.row, globalStyles.alignCenter]}>
                             <Ionicons name="time" size={20} color={colors.info} />
                             <Text style={[typography.body2, { marginLeft: 8, flex: 1 }]}>
-                                Las estadísticas completas de reconocimiento, gráficos de tendencias y métricas de precisión estarán disponibles en una próxima actualización.
+                                Las estadísticas completas de reconocimiento, gráficos de tendencias y métricas de precisión estarán disponibles cuando el endpoint /reconocimiento/estadisticas esté operativo.
                             </Text>
+                        </View>
+
+                        <View style={[globalStyles.marginTop16, { backgroundColor: colors.background, padding: 12, borderRadius: 8 }]}>
+                            <Text style={[typography.caption, { fontWeight: 'bold', marginBottom: 8 }]}>
+                                📋 Estadísticas Planificadas:
+                            </Text>
+                            <Text style={typography.caption}>• Historial de reconocimientos por día/semana</Text>
+                            <Text style={typography.caption}>• Tasa de éxito y confianza promedio</Text>
+                            <Text style={typography.caption}>• Top usuarios más reconocidos</Text>
+                            <Text style={typography.caption}>• Distribución de confianza</Text>
+                            <Text style={typography.caption}>• Métricas de rendimiento del sistema</Text>
                         </View>
                     </Card>
                 </ScrollView>

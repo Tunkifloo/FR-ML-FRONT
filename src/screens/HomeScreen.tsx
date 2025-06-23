@@ -88,15 +88,15 @@ export default function HomeScreen(): JSX.Element {
                         <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter]}>
                             <View style={globalStyles.row}>
                                 <Ionicons
-                                    name={modelInfo?.system_info?.is_trained ? "checkmark-circle" : "close-circle"}
+                                    name={trainingStatus?.model_trained ? "checkmark-circle" : "close-circle"}
                                     size={24}
-                                    color={modelInfo?.system_info?.is_trained ? colors.success : colors.secondary}
+                                    color={trainingStatus?.model_trained ? colors.success : colors.secondary}
                                 />
                                 <Text style={[typography.body1, { marginLeft: 8 }]}>
-                                    Modelo {modelInfo?.system_info?.is_trained ? 'Entrenado' : 'Sin Entrenar'}
+                                    Modelo {trainingStatus?.model_trained ? 'Entrenado' : 'Sin Entrenar'}
                                 </Text>
                             </View>
-                            {!modelInfo?.system_info?.is_trained && trainingStatus?.training_requirements.can_train && (
+                            {!trainingStatus?.model_trained && trainingStatus?.training_requirements.can_train && (
                                 <TouchableOpacity
                                     style={globalStyles.primaryButton}
                                     onPress={handleTrainModel}
@@ -165,7 +165,7 @@ export default function HomeScreen(): JSX.Element {
                         </Card>
                     )}
 
-                    {/* Estado del Entrenamiento */}
+                    {/* Estado del Entrenamiento - DATOS ACTUALIZADOS */}
                     {trainingStatus && (
                         <Card title="Entrenamiento ML">
                             <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
@@ -190,6 +190,9 @@ export default function HomeScreen(): JSX.Element {
                             </Text>
                             <Text style={typography.body2}>
                                 🤖 Entrenamiento automático: {trainingStatus.auto_training_enabled ? 'Activado' : 'Desactivado'}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📋 Mínimo requerido: {trainingStatus.training_requirements.min_required} usuarios
                             </Text>
 
                             {/* Recomendación del sistema */}
@@ -219,7 +222,7 @@ export default function HomeScreen(): JSX.Element {
                         </Card>
                     )}
 
-                    {/* Estadísticas de Alertas */}
+                    {/* Estadísticas de Alertas - DATOS ACTUALIZADOS */}
                     {alertStats && (
                         <Card title="Alertas de Seguridad">
                             <View style={[globalStyles.row, globalStyles.spaceBetween]}>
@@ -240,6 +243,12 @@ export default function HomeScreen(): JSX.Element {
                                         {alertStats.by_level.MEDIUM}
                                     </Text>
                                     <Text style={typography.caption}>Medias</Text>
+                                </View>
+                                <View style={globalStyles.alignCenter}>
+                                    <Text style={[typography.h2, { color: colors.info }]}>
+                                        {alertStats.by_level.LOW}
+                                    </Text>
+                                    <Text style={typography.caption}>Bajas</Text>
                                 </View>
                             </View>
 

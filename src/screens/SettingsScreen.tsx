@@ -6,64 +6,14 @@ import { Card } from '../components/common/Card';
 import { Loading } from '../components/common/Loading';
 import { UserService } from '../services/userService';
 import { RecognitionService } from '../services/recognitionService';
-import { EstadoEntrenamiento } from '../types';
+import { TrainingStatus, DetailedModelInfo } from '../types';
 import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
-interface DetailedModelInfo {
-    system_info: {
-        is_trained: boolean;
-        model_version: string;
-        combination_method: string;
-        confidence_threshold: number;
-        training_sessions: number;
-        data_type_handling: string;
-    };
-    eigenfaces_info: {
-        algorithm: string;
-        is_trained: boolean;
-        n_components: number;
-        image_size: number[];
-        total_embeddings: number;
-        unique_persons: number;
-        threshold_distance: number;
-        variance_explained: number;
-        model_version: string;
-        stability_diagnostics: {
-            infinite_embeddings: number;
-            nan_embeddings: number;
-            stable_embeddings: number;
-            stability_ratio: number;
-        };
-    };
-    lbp_info: {
-        algorithm: string;
-        is_trained: boolean;
-        radius: number;
-        n_points: number;
-        grid_size: number[];
-        method: string;
-        image_size: number[];
-        total_features: number;
-        unique_persons: number;
-        threshold_similarity: number;
-        feature_vector_size: number;
-        data_type_requirement: string;
-        preprocessing_steps: string[];
-        model_version: string;
-    };
-    weights: {
-        eigenfaces: number;
-        lbp: number;
-    };
-    last_training: string | null;
-    fixes_applied: string[];
-}
-
 export default function SettingsScreen(): JSX.Element {
     const [modelInfo, setModelInfo] = useState<DetailedModelInfo | null>(null);
-    const [trainingStatus, setTrainingStatus] = useState<EstadoEntrenamiento | null>(null);
+    const [trainingStatus, setTrainingStatus] = useState<TrainingStatus | null>(null);
     const [loading, setLoading] = useState(false);
 
     const loadSystemInfo = async () => {
@@ -126,40 +76,60 @@ export default function SettingsScreen(): JSX.Element {
             <ScrollView style={globalStyles.content}>
                 {loading && <Loading message="Procesando..." />}
 
-                {/* Estado del Sistema */}
+                {/* Estado del Sistema - DATOS ACTUALIZADOS */}
                 <Card title="Estado del Sistema">
                     <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                         <Ionicons
-                            name={modelInfo?.system_info?.is_trained ? "checkmark-circle" : "close-circle"}
+                            name={trainingStatus?.model_trained ? "checkmark-circle" : "close-circle"}
                             size={24}
-                            color={modelInfo?.system_info?.is_trained ? colors.success : colors.secondary}
+                            color={trainingStatus?.model_trained ? colors.success : colors.secondary}
                         />
                         <Text style={[typography.body1, { marginLeft: 8 }]}>
-                            Modelo {modelInfo?.system_info?.is_trained ? 'Entrenado' : 'Sin Entrenar'}
+                            Modelo {trainingStatus?.model_trained ? 'Entrenado' : 'Sin Entrenar'}
                         </Text>
                     </View>
 
-                    {modelInfo && (
+                    {trainingStatus && (
                         <View>
                             <Text style={typography.body2}>
-                                📊 Versión: {modelInfo.system_info.model_version}
+                                📊 Versión: {trainingStatus.model_version}
                             </Text>
                             <Text style={typography.body2}>
-                                👥 Personas: {modelInfo.eigenfaces_info.unique_persons}
+                                👥 Usuarios con imágenes: {trainingStatus.training_requirements.users_with_images}
                             </Text>
                             <Text style={typography.body2}>
-                                📷 Imágenes: {modelInfo.eigenfaces_info.total_embeddings}
+                                📷 Total imágenes: {trainingStatus.training_requirements.total_images}
                             </Text>
                             <Text style={typography.body2}>
-                                🧠 Método: {modelInfo.system_info.combination_method}
+                                📋 Mínimo requerido: {trainingStatus.training_requirements.min_required} usuarios
                             </Text>
                             <Text style={typography.body2}>
-                                🎯 Umbral confianza: {modelInfo.system_info.confidence_threshold}%
+                                🤖 Entrenamiento automático: {trainingStatus.auto_training_enabled ? 'Activado' : 'Desactivado'}
                             </Text>
                             <Text style={typography.body2}>
-                                ⚖️ Pesos: Eigenfaces {(modelInfo.weights.eigenfaces * 100).toFixed(0)}%, LBP {(modelInfo.weights.lbp * 100).toFixed(0)}%
+                                🔧 Estado sistema: {trainingStatus.system_ready ? 'Listo' : 'Requiere configuración'}
                             </Text>
                         </View>
+                    )}
+
+                    {/* Recomendación del sistema */}
+                    {trainingStatus && (
+                        <View style={[
+                            globalStyles.statusBadge,
+                            trainingStatus.system_ready ? globalStyles.successBadge : globalStyles.warningBadge,
+                            globalStyles.marginTop8
+                        ]}>
+                            <Text style={globalStyles.badgeText}>
+                                {trainingStatus.recommendation}
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Estado de correcciones */}
+                    {trainingStatus && (
+                        <Text style={[typography.caption, globalStyles.marginTop8]}>
+                            {trainingStatus.fixes_status}
+                        </Text>
                     )}
                 </Card>
 
@@ -186,7 +156,13 @@ export default function SettingsScreen(): JSX.Element {
                                 📐 Tamaño imagen: {modelInfo.eigenfaces_info.image_size.join('x')}
                             </Text>
                             <Text style={typography.body2}>
-                                📊 Varianza explicada: {(modelInfo.eigenfaces_info.variance_explained * 100).toFixed(2)}%
+                                👥 Personas únicas: {modelInfo.eigenfaces_info.unique_persons}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📊 Total embeddings: {modelInfo.eigenfaces_info.total_embeddings}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📈 Varianza explicada: {(modelInfo.eigenfaces_info.variance_explained * 100).toFixed(2)}%
                             </Text>
                             <Text style={typography.body2}>
                                 🎯 Umbral distancia: {modelInfo.eigenfaces_info.threshold_distance}
@@ -194,10 +170,26 @@ export default function SettingsScreen(): JSX.Element {
                             <Text style={typography.body2}>
                                 ✅ Estabilidad: {(modelInfo.eigenfaces_info.stability_diagnostics.stability_ratio * 100).toFixed(1)}%
                             </Text>
+
+                            {/* Diagnósticos de estabilidad */}
+                            <View style={[globalStyles.marginTop8, { backgroundColor: colors.background, padding: 8, borderRadius: 6 }]}>
+                                <Text style={[typography.caption, { fontWeight: 'bold', marginBottom: 4 }]}>
+                                    Diagnósticos de Estabilidad:
+                                </Text>
+                                <Text style={typography.caption}>
+                                    • Embeddings estables: {modelInfo.eigenfaces_info.stability_diagnostics.stable_embeddings}
+                                </Text>
+                                <Text style={typography.caption}>
+                                    • Embeddings infinitos: {modelInfo.eigenfaces_info.stability_diagnostics.infinite_embeddings}
+                                </Text>
+                                <Text style={typography.caption}>
+                                    • Embeddings NaN: {modelInfo.eigenfaces_info.stability_diagnostics.nan_embeddings}
+                                </Text>
+                            </View>
                         </Card>
 
                         {/* LBP */}
-                        <Card title="Local Binary Patterns">
+                        <Card title="Local Binary Patterns (LBP)">
                             <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom8]}>
                                 <Ionicons
                                     name={modelInfo.lbp_info.is_trained ? "checkmark-circle" : "close-circle"}
@@ -216,6 +208,12 @@ export default function SettingsScreen(): JSX.Element {
                                 🔢 Vector características: {modelInfo.lbp_info.feature_vector_size}
                             </Text>
                             <Text style={typography.body2}>
+                                👥 Personas únicas: {modelInfo.lbp_info.unique_persons}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📊 Total características: {modelInfo.lbp_info.total_features}
+                            </Text>
+                            <Text style={typography.body2}>
                                 🎯 Umbral similitud: {modelInfo.lbp_info.threshold_similarity}
                             </Text>
                             <Text style={typography.body2}>
@@ -224,49 +222,55 @@ export default function SettingsScreen(): JSX.Element {
                             <Text style={typography.body2}>
                                 🔧 Método: {modelInfo.lbp_info.method}
                             </Text>
+                            <Text style={typography.body2}>
+                                🏗️ Tamaño imagen: {modelInfo.lbp_info.image_size.join('x')}
+                            </Text>
+
+                            {/* Pasos de preprocesamiento */}
+                            <View style={[globalStyles.marginTop8, { backgroundColor: colors.background, padding: 8, borderRadius: 6 }]}>
+                                <Text style={[typography.caption, { fontWeight: 'bold', marginBottom: 4 }]}>
+                                    Pasos de Preprocesamiento:
+                                </Text>
+                                {modelInfo.lbp_info.preprocessing_steps.map((step, index) => (
+                                    <Text key={index} style={typography.caption}>
+                                        • {step}
+                                    </Text>
+                                ))}
+                            </View>
+                        </Card>
+
+                        {/* Sistema Híbrido */}
+                        <Card title="Sistema Híbrido">
+                            <Text style={typography.body2}>
+                                🔄 Método combinación: {modelInfo.system_info.combination_method}
+                            </Text>
+                            <Text style={typography.body2}>
+                                ⚖️ Peso Eigenfaces: {(modelInfo.weights.eigenfaces * 100).toFixed(0)}%
+                            </Text>
+                            <Text style={typography.body2}>
+                                ⚖️ Peso LBP: {(modelInfo.weights.lbp * 100).toFixed(0)}%
+                            </Text>
+                            <Text style={typography.body2}>
+                                🎯 Umbral confianza: {modelInfo.system_info.confidence_threshold}%
+                            </Text>
+                            <Text style={typography.body2}>
+                                🎓 Sesiones entrenamiento: {modelInfo.system_info.training_sessions}
+                            </Text>
+                            <Text style={typography.body2}>
+                                🛠️ Manejo tipos datos: {modelInfo.system_info.data_type_handling}
+                            </Text>
+                            {modelInfo.last_training && (
+                                <Text style={typography.body2}>
+                                    📅 Último entrenamiento: {new Date(modelInfo.last_training).toLocaleString('es-ES')}
+                                </Text>
+                            )}
                         </Card>
                     </>
                 )}
 
-                {/* Estado del Entrenamiento */}
-                <Card title="Entrenamiento ML">
-                    <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
-                        <Ionicons
-                            name={trainingStatus?.is_trained ? "school" : "alert-circle"}
-                            size={24}
-                            color={trainingStatus?.is_trained ? colors.success : colors.warning}
-                        />
-                        <Text style={[typography.body1, { marginLeft: 8 }]}>
-                            {trainingStatus?.is_trained ? 'Modelo Entrenado' : 'Requiere Entrenamiento'}
-                        </Text>
-                    </View>
-
-                    {trainingStatus && (
-                        <View>
-                            <Text style={typography.body2}>
-                                👥 Personas: {trainingStatus.total_persons}
-                            </Text>
-                            <Text style={typography.body2}>
-                                📸 Imágenes de entrenamiento: {trainingStatus.total_training_images}
-                            </Text>
-                            {trainingStatus.last_training_date && (
-                                <Text style={typography.body2}>
-                                    📅 Último entrenamiento: {new Date(trainingStatus.last_training_date).toLocaleString()}
-                                </Text>
-                            )}
-
-                            {trainingStatus.next_training_suggested && (
-                                <View style={[globalStyles.statusBadge, globalStyles.warningBadge, globalStyles.marginTop8]}>
-                                    <Text style={globalStyles.badgeText}>
-                                        Se recomienda reentrenar
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Botones de acción */}
-                    <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.marginTop16]}>
+                {/* Botones de acción */}
+                <Card title="Acciones del Sistema">
+                    <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.marginBottom16]}>
                         <TouchableOpacity
                             style={[globalStyles.primaryButton, { flex: 0.48 }]}
                             onPress={handleTrainModel}
@@ -283,6 +287,41 @@ export default function SettingsScreen(): JSX.Element {
                             <Text style={globalStyles.secondaryButtonText}>Actualizar Info</Text>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Botón para forzar reentrenamiento */}
+                    {trainingStatus?.model_trained && (
+                        <TouchableOpacity
+                            style={[globalStyles.alertButton, globalStyles.marginTop8]}
+                            onPress={() => {
+                                Alert.alert(
+                                    'Forzar Reentrenamiento',
+                                    '¿Deseas forzar un reentrenamiento completo del modelo? Esto puede tomar varios minutos.',
+                                    [
+                                        { text: 'Cancelar', style: 'cancel' },
+                                        {
+                                            text: 'Forzar',
+                                            style: 'destructive',
+                                            onPress: async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    await UserService.forceRetrain();
+                                                    Alert.alert('Éxito', 'Reentrenamiento completado');
+                                                    await loadSystemInfo();
+                                                } catch (err: any) {
+                                                    Alert.alert('Error', err.response?.data?.detail || 'Error en reentrenamiento');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }
+                                        }
+                                    ]
+                                );
+                            }}
+                            disabled={loading}
+                        >
+                            <Text style={globalStyles.buttonText}>Forzar Reentrenamiento</Text>
+                        </TouchableOpacity>
+                    )}
                 </Card>
 
                 {/* Configuración de la App */}
@@ -320,7 +359,7 @@ export default function SettingsScreen(): JSX.Element {
                 </Card>
 
                 {/* Mejoras Aplicadas */}
-                {modelInfo && modelInfo.fixes_applied && (
+                {modelInfo && modelInfo.fixes_applied && modelInfo.fixes_applied.length > 0 && (
                     <Card title="Mejoras del Sistema">
                         {modelInfo.fixes_applied.map((fix, index) => (
                             <View key={index} style={[globalStyles.row, globalStyles.marginBottom8]}>
@@ -348,10 +387,13 @@ export default function SettingsScreen(): JSX.Element {
                         <Text style={typography.body2}>
                             🔒 Enfocado en seguridad y control de acceso
                         </Text>
+                        <Text style={typography.body2}>
+                            🏗️ Arquitectura: Eigenfaces + LBP + Fusión Híbrida
+                        </Text>
                     </View>
                 </Card>
 
-                {/* Acciones del Sistema */}
+                {/* Acciones de Mantenimiento */}
                 <Card title="Mantenimiento">
                     <TouchableOpacity
                         style={[globalStyles.secondaryButton, globalStyles.marginBottom16]}

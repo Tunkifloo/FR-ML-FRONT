@@ -5,28 +5,9 @@ import {
     ResponsePaginado,
     Usuario,
     UsuarioCreate,
-    EstadisticasUsuarios
+    EstadisticasUsuarios,
+    TrainingStatus
 } from '../types';
-
-// Tipo para el estado de entrenamiento real
-interface TrainingStatus {
-    model_trained: boolean;
-    auto_training_enabled: boolean;
-    training_requirements: {
-        can_train: boolean;
-        users_with_images: number;
-        total_images: number;
-        min_required: number;
-        pending_users: number;
-        model_trained: boolean;
-        auto_training_enabled: boolean;
-        model_version: string;
-    };
-    system_ready: boolean;
-    recommendation: string;
-    model_version: string;
-    fixes_status: string;
-}
 
 export class UserService {
     // Crear nuevo usuario
@@ -210,7 +191,7 @@ export class UserService {
         }
     }
 
-    // Obtener estado del entrenamiento (endpoint actualizado)
+    // Obtener estado del entrenamiento - ENDPOINT ACTUALIZADO
     static async getTrainingStatus(): Promise<ResponseWithData<TrainingStatus>> {
         try {
             const response = await apiService.axiosInstance.get('/usuarios/entrenamiento/estado');

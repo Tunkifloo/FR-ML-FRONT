@@ -3,11 +3,10 @@ import { handleApiError } from '../utils/errorHandler';
 import {
     ResponseWithData,
     RecognitionResult,
-    HistorialReconocimiento,
-    EstadisticasReconocimiento,
-    ModelInfo,
-    AlertaSeguridad,
-    DetailedModelInfo
+    DetailedModelInfo,
+    AlertStats,
+    RecognitionHistoryData,
+    AlertsData
 } from '../types';
 
 export class RecognitionService {
@@ -37,7 +36,7 @@ export class RecognitionService {
         }
     }
 
-    // Obtener historial de reconocimientos
+    // Obtener historial de reconocimientos - ACTUALIZADO SEGÚN ENDPOINT REAL
     static async getRecognitionHistory(
         pagina: number = 1,
         itemsPorPagina: number = 20,
@@ -47,15 +46,7 @@ export class RecognitionService {
             alerta_generada?: boolean;
             confianza_minima?: number;
         } = {}
-    ): Promise<ResponseWithData<{
-        reconocimientos: HistorialReconocimiento[];
-        paginacion: {
-            total: number;
-            pagina: number;
-            items_por_pagina: number;
-            total_paginas: number;
-        };
-    }>> {
+    ): Promise<ResponseWithData<RecognitionHistoryData>> {
         try {
             const params = new URLSearchParams();
 
@@ -78,17 +69,21 @@ export class RecognitionService {
         }
     }
 
-    // Obtener estadísticas de reconocimientos
-    static async getRecognitionStatistics(dias: number = 30): Promise<ResponseWithData<EstadisticasReconocimiento>> {
+    // Obtener estadísticas de reconocimientos - MARCADO COMO NO OPERATIVO
+    static async getRecognitionStatistics(dias: number = 30): Promise<ResponseWithData<any>> {
         try {
+            // NOTA: Este endpoint no está operativo según las especificaciones
+            // Se mantiene para compatibilidad pero debería mostrar mensaje de desarrollo
+            console.warn('⚠️ Endpoint /reconocimiento/estadisticas no está operativo');
+
             const params = new URLSearchParams();
             params.append('dias', dias.toString());
 
             const response = await apiService.axiosInstance.get(`/reconocimiento/estadisticas?${params.toString()}`);
             return response.data;
         } catch (error) {
-            console.error('Error in getRecognitionStatistics:', error);
-            throw new Error(handleApiError(error, 'Error al obtener estadísticas de reconocimiento'));
+            console.error('Error in getRecognitionStatistics (endpoint no operativo):', error);
+            throw new Error('Las estadísticas de reconocimiento están en desarrollo');
         }
     }
 
@@ -103,15 +98,11 @@ export class RecognitionService {
         }
     }
 
-    // Obtener historial de alertas
+    // Obtener historial de alertas - ACTUALIZADO SEGÚN ENDPOINT REAL
     static async getAlertsHistory(
         limite: number = 50,
         nivel?: 'HIGH' | 'MEDIUM' | 'LOW'
-    ): Promise<ResponseWithData<{
-        total_alertas: number;
-        filtro_nivel?: string;
-        alertas: AlertaSeguridad[];
-    }>> {
+    ): Promise<ResponseWithData<AlertsData>> {
         try {
             const params = new URLSearchParams();
             params.append('limite', limite.toString());
@@ -128,8 +119,8 @@ export class RecognitionService {
         }
     }
 
-    // Obtener estadísticas de alertas
-    static async getAlertsStatistics(): Promise<ResponseWithData<any>> {
+    // Obtener estadísticas de alertas - OPERATIVO
+    static async getAlertsStatistics(): Promise<ResponseWithData<AlertStats>> {
         try {
             const response = await apiService.axiosInstance.get('/reconocimiento/alertas/estadisticas');
             return response.data;
@@ -169,6 +160,31 @@ export class RecognitionService {
         } catch (error) {
             console.error('Error in reloadModel:', error);
             throw new Error(handleApiError(error, 'Error al recargar modelo'));
+        }
+    }
+
+    // Probar sistema de alertas
+    static async testAlertSystem(): Promise<ResponseWithData<any>> {
+        try {
+            const response = await apiService.axiosInstance.post('/reconocimiento/alertas/test');
+            return response.data;
+        } catch (error) {
+            console.error('Error in testAlertSystem:', error);
+            throw new Error(handleApiError(error, 'Error al probar sistema de alertas'));
+        }
+    }
+
+    // Limpiar historial antiguo
+    static async clearOldHistory(diasMantener: number = 90): Promise<ResponseWithData<any>> {
+        try {
+            const params = new URLSearchParams();
+            params.append('dias_mantener', diasMantener.toString());
+
+            const response = await apiService.axiosInstance.delete(`/reconocimiento/historial/limpiar?${params.toString()}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error in clearOldHistory:', error);
+            throw new Error(handleApiError(error, 'Error al limpiar historial'));
         }
     }
 }

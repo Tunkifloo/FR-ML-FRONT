@@ -115,7 +115,7 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                     </View>
                 </View>
 
-                {/* Información del usuario */}
+                {/* Información del usuario - ESTRUCTURA ACTUALIZADA */}
                 {item.usuario_info && (
                     <View style={{ marginBottom: 12 }}>
                         <Text style={typography.h4}>
@@ -127,10 +127,19 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                         {item.usuario_info.requisitoriado && (
                             <View style={[globalStyles.statusBadge, globalStyles.errorBadge, { marginTop: 8 }]}>
                                 <Text style={globalStyles.badgeText}>
-                                    REQUISITORIADO: {item.usuario_info.tipo_requisitoria}
+                                    REQUISITORIADO: {item.usuario_info.tipo_requisitoria || 'Sin especificar'}
                                 </Text>
                             </View>
                         )}
+                    </View>
+                )}
+
+                {/* Usuario ID cuando no hay info completa */}
+                {!item.usuario_info && item.usuario_id && (
+                    <View style={{ marginBottom: 12 }}>
+                        <Text style={typography.body2}>
+                            Usuario ID: {item.usuario_id}
+                        </Text>
                     </View>
                 )}
 
@@ -139,7 +148,7 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                     <View style={[globalStyles.row, globalStyles.alignCenter, { marginBottom: 8 }]}>
                         <Ionicons name="warning" size={16} color={colors.secondary} />
                         <Text style={[typography.body2, { marginLeft: 4, color: colors.secondary }]}>
-                            Alerta de seguridad generada
+                            🚨 Alerta de seguridad generada
                         </Text>
                     </View>
                 )}
@@ -150,13 +159,13 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                         🕒 {formatDate(item.fecha_reconocimiento)}
                     </Text>
                     <Text style={typography.caption}>
-                        🌐 IP: {item.ip_origen}
+                        🌐 IP origen: {item.ip_origen}
                     </Text>
                     <Text style={typography.caption}>
-                        📊 Distancia: {item.distancia_euclidiana}
+                        📊 Distancia euclidiana: {item.distancia_euclidiana}
                     </Text>
                     <Text style={typography.caption}>
-                        🆔 ID de reconocimiento: {item.id}
+                        🆔 ID reconocimiento: #{item.id}
                     </Text>
                 </View>
             </Card>
@@ -171,12 +180,17 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                     <Text style={typography.body2}>
                         {historyData?.paginacion.total || 0} reconocimientos registrados
                     </Text>
+                    {historyData && (
+                        <Text style={typography.caption}>
+                            Página {historyData.paginacion.pagina} de {historyData.paginacion.total_paginas}
+                        </Text>
+                    )}
                 </View>
                 <Ionicons name="time" size={32} color={colors.primary} />
             </View>
 
-            {/* Estadísticas rápidas */}
-            {historyData && (
+            {/* Estadísticas rápidas de la página actual */}
+            {historyData && historyData.reconocimientos.length > 0 && (
                 <View style={[globalStyles.row, globalStyles.spaceBetween, { marginTop: 16 }]}>
                     <View style={globalStyles.alignCenter}>
                         <Text style={[typography.h3, { color: colors.primary }]}>
@@ -195,6 +209,12 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                             {historyData.reconocimientos.filter(r => r.alerta_generada).length}
                         </Text>
                         <Text style={typography.caption}>Alertas</Text>
+                    </View>
+                    <View style={globalStyles.alignCenter}>
+                        <Text style={[typography.h3, { color: colors.warning }]}>
+                            {historyData.reconocimientos.filter(r => r.usuario_info?.requisitoriado).length}
+                        </Text>
+                        <Text style={typography.caption}>Requisitoriados</Text>
                     </View>
                 </View>
             )}

@@ -20,6 +20,7 @@ export interface RecognitionResult {
     };
     alerta_seguridad?: AlertaSeguridad;
     detalles_tecnicos?: any;
+    historial_id?: number;
 }
 
 export interface AlertaSeguridad {
@@ -27,11 +28,19 @@ export interface AlertaSeguridad {
     alert_level: 'HIGH' | 'MEDIUM' | 'LOW';
     alert_type: string;
     person_name: string;
+    person_lastname: string;
     requisition_type: string;
     confidence: number;
     timestamp: string;
     location: string;
     message: string;
+    detection_timestamp: string;
+    image_path: string;
+    additional_info: {
+        algorithm: string;
+        processing_time: number;
+        client_ip: string;
+    };
 }
 
 export interface HistorialReconocimiento {
@@ -42,11 +51,13 @@ export interface HistorialReconocimiento {
     alerta_generada: boolean;
     fecha_reconocimiento: string;
     ip_origen: string;
+    distancia_euclidiana: string;
     usuario_info?: {
         nombre: string;
         apellido: string;
         id_estudiante?: string;
         requisitoriado: boolean;
+        tipo_requisitoria?: string | null;
     };
 }
 

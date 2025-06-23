@@ -6,43 +6,13 @@ import { Card } from '../components/common/Card';
 import { Loading } from '../components/common/Loading';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { RecognitionService } from '../services/recognitionService';
+import { AlertsData, Alert } from '../types';
 import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
-interface AlertInfo {
-    person_id: number;
-    person_name: string;
-    person_lastname: string;
-    student_id: string;
-    requisition_type: string;
-    confidence: number;
-    detection_timestamp: string;
-    image_path: string;
-    alert_level: 'HIGH' | 'MEDIUM' | 'LOW';
-    location: string;
-    additional_info: {
-        algorithm: string;
-        processing_time: number;
-        client_ip: string;
-    };
-}
-
-interface Alert {
-    alert_id: string;
-    alert_info: AlertInfo;
-    logged_at: string;
-    status: string;
-}
-
-interface AlertsData {
-    total_alertas: number;
-    filtro_nivel?: string;
-    alertas: Alert[];
-}
-
 export default function AlertsScreen(): JSX.Element {
-    const [alertsData, setAlertsData] = useState<AlertsData | null>(null); null>(null);
+    const [alertsData, setAlertsData] = useState<AlertsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -172,6 +142,9 @@ export default function AlertsScreen(): JSX.Element {
                     <Text style={typography.body2}>
                         🌐 IP: {item.alert_info.additional_info.client_ip}
                     </Text>
+                    <Text style={typography.body2}>
+                        📷 Imagen: {item.alert_info.image_path}
+                    </Text>
                 </View>
 
                 {/* Estado */}
@@ -199,13 +172,18 @@ export default function AlertsScreen(): JSX.Element {
                         <Text style={typography.body2}>
                             {alertsData?.total_alertas || 0} alertas registradas
                         </Text>
+                        {selectedLevel && (
+                            <Text style={typography.caption}>
+                                Filtro activo: Nivel {selectedLevel}
+                            </Text>
+                        )}
                     </View>
                     <Ionicons name="alert-circle" size={32} color={colors.secondary} />
                 </View>
             </Card>
 
             {/* Filtros por nivel */}
-            <Card title="Filtrar por Nivel">
+            <Card title="Filtrar por Nivel de Alerta">
                 <View style={[globalStyles.row, globalStyles.spaceBetween]}>
                     <TouchableOpacity
                         style={[
@@ -292,6 +270,14 @@ export default function AlertsScreen(): JSX.Element {
                         'No se han generado alertas de seguridad'
                     }
                 </Text>
+                {selectedLevel && (
+                    <TouchableOpacity
+                        style={[globalStyles.secondaryButton, globalStyles.marginTop16]}
+                        onPress={() => setSelectedLevel(null)}
+                    >
+                        <Text style={globalStyles.secondaryButtonText}>Ver Todas las Alertas</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </Card>
     );

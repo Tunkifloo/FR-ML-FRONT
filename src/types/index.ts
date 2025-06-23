@@ -113,7 +113,7 @@ export interface AlertStats {
     };
     by_requisition_type: Record<string, number>;
     daily_average: number;
-    most_common_requisition: string;
+    most_common_requisition: string | null;
     last_30_days: number;
 }
 
@@ -147,12 +147,12 @@ export interface Alert {
 // Datos de historial de alertas
 export interface AlertsData {
     total_alertas: number;
-    filtro_nivel?: string;
+    filtro_nivel?: string | null;
     alertas: Alert[];
 }
 
 // Información de usuario en historial
-export interface UserInfo {
+export interface UserInfoInHistory {
     nombre: string;
     apellido: string;
     id_estudiante: string;
@@ -170,7 +170,7 @@ export interface RecognitionHistoryItem {
     alerta_generada: boolean;
     fecha_reconocimiento: string;
     ip_origen: string;
-    usuario_info: UserInfo;
+    usuario_info: UserInfoInHistory;
 }
 
 // Datos completos del historial de reconocimientos
@@ -265,47 +265,6 @@ export interface AppConfig {
     cacheTimeout: number;
 }
 
-// Tipos para respuestas de reconocimiento mejoradas
-export interface EnhancedRecognitionResult {
-    reconocido: boolean;
-    persona_id?: number;
-    confianza: number;
-    metodo: 'eigenfaces' | 'lbp' | 'hybrid';
-    tiempo_procesamiento: number;
-    timestamp: string;
-    imagen_info: {
-        dimensiones: string;
-        canales: number;
-        tamano_bytes: number;
-    };
-    detalles_tecnicos?: {
-        eigenfaces?: {
-            distancia: number;
-            confianza: number;
-            umbral: number;
-        };
-        lbp?: {
-            similitud: number;
-            confianza: number;
-            umbral: number;
-        };
-        fusion?: {
-            metodo: string;
-            pesos: Record<string, number>;
-            confianza_final: number;
-        };
-    };
-    persona_info?: {
-        id: number;
-        nombre: string;
-        apellido: string;
-        id_estudiante?: string;
-        requisitoriado: boolean;
-        tipo_requisitoria?: string;
-    };
-    alerta_seguridad?: Alert;
-}
-
 // Estados de la aplicación
 export interface AppState {
     isLoading: boolean;
@@ -333,4 +292,16 @@ export interface SystemMetrics {
     api_response_time: number;
     total_requests: number;
     error_rate: number;
+}
+
+// Estado de entrenamiento legacy (para compatibilidad)
+export interface EstadoEntrenamiento {
+    is_trained: boolean;
+    total_persons: number;
+    total_training_images: number;
+    last_training_date?: string;
+    next_training_suggested?: boolean;
+    model_accuracy?: number;
+    training_time_seconds?: number;
+    algorithms_trained?: string[];
 }
