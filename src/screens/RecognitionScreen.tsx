@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, JSX} from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -104,6 +104,8 @@ export default function RecognitionScreen(): JSX.Element {
                 <View style={globalStyles.container}>
                     <ErrorMessage
                         message="Sin acceso a la cámara. Habilita los permisos en configuración."
+                        onRetry={requestPermission}
+                        retryText="Solicitar Permisos"
                     />
                 </View>
             </SafeAreaView>

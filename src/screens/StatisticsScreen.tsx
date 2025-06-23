@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, JSX} from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {JSX} from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { colors } from '../theme/colors';
 
 // Screens
@@ -221,8 +222,10 @@ function TabNavigator() {
 // Navegador Principal
 export default function AppNavigator(): JSX.Element {
     return (
-        <NavigationContainer>
-            <TabNavigator />
-        </NavigationContainer>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <NavigationContainer>
+                <TabNavigator />
+            </NavigationContainer>
+        </GestureHandlerRootView>
     );
 }
