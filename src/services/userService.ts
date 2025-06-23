@@ -80,9 +80,9 @@ export class UserService {
         }
     }
 
-    // Obtener usuario por ID de estudiante
-    static async getUserByStudentId(
-        idEstudiante: string,
+    // CORREGIDO: Obtener usuario por ID numérico (PK) - ENDPOINT OPERATIVO
+    static async getUserById(
+        usuarioId: number,
         incluirImagenes: boolean = true,
         incluirReconocimientos: boolean = false
     ): Promise<ResponseWithData<Usuario>> {
@@ -92,12 +92,99 @@ export class UserService {
             params.append('incluir_reconocimientos', incluirReconocimientos.toString());
 
             const response = await apiService.axiosInstance.get(
-                `/usuarios/estudiante/${idEstudiante}?${params.toString()}`
+                `/usuarios/${usuarioId}?${params.toString()}`
             );
             return response.data;
         } catch (error) {
+            console.error('Error in getUserById:', error);
+            throw new Error(handleApiError(error, 'Error al obtener usuario por ID'));
+        }
+    }
+
+    // DEPRECADO: Obtener usuario por ID de estudiante - ENDPOINT NO OPERATIVO
+    static async getUserByStudentId(
+        idEstudiante: string,
+        incluirImagenes: boolean = true,
+        incluirReconocimientos: boolean = false
+    ): Promise<ResponseWithData<Usuario>> {
+        try {
+            // MÉTODO ALTERNATIVO: Buscar a través del listado con filtro por ID de estudiante
+            console.warn('⚠️ Endpoint /usuarios/estudiante/{id} no operativo. Usando búsqueda alternativa...');
+
+            // Intentar buscar por ID de estudiante usando el listado con filtros
+            const searchResponse = await this.getUsers(1, 100, {
+                // Nota: El filtro por id_estudiante puede no estar disponible en el endpoint de listado
+                // En ese caso, necesitaremos buscar manualmente
+            });
+
+            // Buscar manualmente en los resultados
+            const foundUser = searchResponse.data.find(user =>
+                user.id_estudiante === idEstudiante
+            );
+
+            if (!foundUser) {
+                throw new Error(`Usuario con ID de estudiante '${idEstudiante}' no encontrado`);
+            }
+
+            // Si se encuentra, obtener los detalles completos usando el ID numérico
+            if (incluirImagenes || incluirReconocimientos) {
+                return await this.getUserById(foundUser.id, incluirImagenes, incluirReconocimientos);
+            }
+
+            // Si no se necesitan detalles adicionales, retornar el usuario encontrado
+            return {
+                success: true,
+                message: `Usuario '${idEstudiante}' obtenido exitosamente`,
+                data: foundUser,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
             console.error('Error in getUserByStudentId:', error);
             throw new Error(handleApiError(error, 'Error al obtener usuario por ID de estudiante'));
+        }
+    }
+
+    // NUEVO: Buscar usuario por ID de estudiante con búsqueda optimizada
+    static async searchUserByStudentId(idEstudiante: string): Promise<Usuario | null> {
+        try {
+            console.log(`🔍 Buscando usuario con ID estudiante: ${idEstudiante}`);
+
+            // Buscar en páginas hasta encontrar el usuario
+            let page = 1;
+            const pageSize = 50;
+            let hasMore = true;
+
+            while (hasMore) {
+                const response = await this.getUsers(page, pageSize);
+
+                // Buscar en los resultados actuales
+                const foundUser = response.data.find(user =>
+                    user.id_estudiante === idEstudiante
+                );
+
+                if (foundUser) {
+                    console.log(`✅ Usuario encontrado: ${foundUser.nombre} ${foundUser.apellido} (ID: ${foundUser.id})`);
+                    return foundUser;
+                }
+
+                // Verificar si hay más páginas
+                hasMore = page < response.total_paginas;
+                page++;
+
+                // Límite de seguridad para evitar bucles infinitos
+                if (page > 20) {
+                    console.warn('⚠️ Límite de búsqueda alcanzado (20 páginas)');
+                    break;
+                }
+            }
+
+            console.log(`❌ Usuario con ID estudiante '${idEstudiante}' no encontrado`);
+            return null;
+
+        } catch (error) {
+            console.error('Error in searchUserByStudentId:', error);
+            throw new Error(handleApiError(error, 'Error al buscar usuario'));
         }
     }
 

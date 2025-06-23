@@ -36,10 +36,15 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
             setError(null);
             setLoading(true);
 
-            // Primero intentamos buscar por ID numérico
-            const response = await UserService.getUserByStudentId(userId.toString(), true, true);
+            console.log(`🔍 Cargando detalles del usuario con ID: ${userId}`);
+
+            // CORREGIDO: Usar el endpoint correcto por ID numérico
+            const response = await UserService.getUserById(userId, true, true);
+            console.log(`✅ Usuario cargado exitosamente:`, response.data);
+
             setUser(response.data);
         } catch (err: any) {
+            console.error('❌ Error cargando usuario:', err);
             setError(err.message || 'Error al cargar detalles del usuario');
         } finally {
             setLoading(false);
@@ -119,6 +124,8 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
 
         try {
             setAddingImages(true);
+            console.log(`📸 Añadiendo ${imageUris.length} imagen(es) al usuario ${user.id}`);
+
             await UserService.addUserImages(user.id, imageUris);
 
             Alert.alert(
@@ -130,6 +137,7 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
             // Recargar detalles del usuario
             await loadUserDetails();
         } catch (error: any) {
+            console.error('❌ Error añadiendo imágenes:', error);
             Alert.alert('Error', error.message || 'Error al añadir imágenes');
         } finally {
             setAddingImages(false);
@@ -154,11 +162,14 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                     onPress: async () => {
                         try {
                             setLoading(true);
+                            console.log(`🗑️ Eliminando usuario ${user.id}`);
+
                             await UserService.deleteUser(user.id, false);
                             Alert.alert('Éxito', 'Usuario eliminado exitosamente', [
                                 { text: 'OK', onPress: () => navigation.goBack() }
                             ]);
                         } catch (error: any) {
+                            console.error('❌ Error eliminando usuario:', error);
                             Alert.alert('Error', error.message || 'Error al eliminar usuario');
                             setLoading(false);
                         }
@@ -243,6 +254,9 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                                         ID: {user.id_estudiante}
                                     </Text>
                                 )}
+                                <Text style={[typography.caption, { marginTop: 4 }]}>
+                                    Usuario ID: {user.id}
+                                </Text>
                             </View>
                         </View>
 
@@ -410,6 +424,32 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                             ))}
                         </Card>
                     )}
+
+                    {/* Información Técnica */}
+                    <Card title="Información Técnica">
+                        <Text style={typography.body2}>
+                            🆔 ID Usuario: {user.id}
+                        </Text>
+                        {user.id_estudiante && (
+                            <Text style={typography.body2}>
+                                🎓 ID Estudiante: {user.id_estudiante}
+                            </Text>
+                        )}
+                        <Text style={typography.body2}>
+                            📧 Email: {user.email}
+                        </Text>
+                        <Text style={typography.body2}>
+                            📸 Total imágenes: {user.total_imagenes}
+                        </Text>
+                        <Text style={typography.body2}>
+                            ✅ Estado: {user.activo ? 'Activo' : 'Inactivo'}
+                        </Text>
+                        {user.requisitoriado && (
+                            <Text style={typography.body2}>
+                                🚨 Requisitoria: {user.tipo_requisitoria}
+                            </Text>
+                        )}
+                    </Card>
 
                     {/* Acciones */}
                     <Card title="Acciones">

@@ -1,5 +1,5 @@
 import React, {useState, useRef, useCallback, JSX} from 'react';
-import { View, Text, TouchableOpacity, Image, Alert, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Alert, BackHandler, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -132,13 +132,50 @@ export default function RecognitionScreen({ navigation }: RecognitionScreenProps
 
             setResult(response.data);
 
-            // Si hay alerta de seguridad, mostrar notificación
-            if (response.data.alerta_seguridad) {
-                Alert.alert(
-                    '🚨 ALERTA DE SEGURIDAD',
-                    `Persona requisitoriada detectada:\n${response.data.persona_info?.nombre} ${response.data.persona_info?.apellido}\nTipo: ${response.data.persona_info?.tipo_requisitoria}`,
-                    [{ text: 'Entendido', style: 'default' }]
-                );
+            // MANEJO MEJORADO Y SEGURO DE ALERTAS DE SEGURIDAD
+            if (response.data?.alerta_seguridad) {
+                const alert = response.data.alerta_seguridad;
+                const persona = response.data.persona_info;
+
+                console.log('🚨 Alerta de seguridad detectada:', alert);
+
+                // VERIFICACIONES DE SEGURIDAD PARA EVITAR ERRORES
+                const safeAlert = {
+                    person_name: alert.person_name || 'Nombre no disponible',
+                    person_lastname: alert.person_lastname || '',
+                    confidence: typeof alert.confidence === 'number' ? alert.confidence : 0,
+                    requisition_type: alert.requisition_type || 'Tipo no especificado',
+                };
+
+                const safePersona = {
+                    nombre: persona?.nombre || safeAlert.person_name,
+                    apellido: persona?.apellido || safeAlert.person_lastname,
+                    id_estudiante: persona?.id_estudiante || 'No disponible',
+                    tipo_requisitoria: persona?.tipo_requisitoria || safeAlert.requisition_type,
+                };
+
+                // Mostrar alerta inmediata más detallada con datos seguros
+                setTimeout(() => {
+                    Alert.alert(
+                        '🚨 ALERTA DE SEGURIDAD CRÍTICA',
+                        `PERSONA REQUISITORIADA DETECTADA\n\n` +
+                        `👤 Nombre: ${safePersona.nombre} ${safePersona.apellido}\n` +
+                        `🆔 ID: ${safePersona.id_estudiante}\n` +
+                        `⚠️ Tipo: ${safePersona.tipo_requisitoria}\n` +
+                        `📊 Confianza: ${safeAlert.confidence.toFixed(1)}%\n\n` +
+                        `🚨 CONTACTE INMEDIATAMENTE A LAS AUTORIDADES`,
+                        [
+                            {
+                                text: 'Entendido',
+                                style: 'default',
+                                onPress: () => console.log('Alerta de seguridad reconocida')
+                            }
+                        ],
+                        {
+                            cancelable: false // No se puede cancelar
+                        }
+                    );
+                }, 500); // Pequeño delay para asegurar que la UI esté lista
             }
         } catch (err: any) {
             console.error('❌ Error procesando imagen:', err);
@@ -370,59 +407,65 @@ export default function RecognitionScreen({ navigation }: RecognitionScreenProps
                     </View>
                 )}
 
-                {/* Resultado del reconocimiento */}
+                {/* Resultado del reconocimiento - MEJORADO CON SCROLL */}
                 {(imageUri || result || error) && (
-                    <View style={globalStyles.content}>
-                        {error && (
-                            <ErrorMessage
-                                message={error}
-                                onRetry={imageUri ? () => processImage(imageUri) : undefined}
-                            />
-                        )}
+                    <ScrollView
+                        style={globalStyles.flex1}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <View style={globalStyles.content}>
+                            {error && (
+                                <ErrorMessage
+                                    message={error}
+                                    onRetry={imageUri ? () => processImage(imageUri) : undefined}
+                                />
+                            )}
 
-                        {result && (
-                            <ResultCard result={result} imageUri={imageUri || undefined} />
-                        )}
+                            {result && (
+                                <ResultCard result={result} imageUri={imageUri || undefined} />
+                            )}
 
-                        {/* Imagen capturada sin resultado aún */}
-                        {imageUri && !result && !loading && !error && (
-                            <Card title="Imagen Capturada">
-                                <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
-                                    <Image
-                                        source={{ uri: imageUri }}
-                                        style={{
-                                            width: 200,
-                                            height: 200,
-                                            borderRadius: 100,
-                                            marginBottom: 16,
-                                        }}
-                                    />
-                                    <Text style={typography.body1}>
-                                        Imagen lista para procesar
-                                    </Text>
-                                </View>
-                            </Card>
-                        )}
+                            {/* Imagen capturada sin resultado aún */}
+                            {imageUri && !result && !loading && !error && (
+                                <Card title="Imagen Capturada">
+                                    <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
+                                        <Image
+                                            source={{ uri: imageUri }}
+                                            style={{
+                                                width: 200,
+                                                height: 200,
+                                                borderRadius: 100,
+                                                marginBottom: 16,
+                                            }}
+                                        />
+                                        <Text style={typography.body1}>
+                                            Imagen lista para procesar
+                                        </Text>
+                                    </View>
+                                </Card>
+                            )}
 
-                        {/* Botones de acción */}
-                        <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.marginTop16]}>
-                            <TouchableOpacity
-                                style={[globalStyles.secondaryButton, { flex: 0.48 }]}
-                                onPress={resetRecognition}
-                                disabled={loading}
-                            >
-                                <Text style={globalStyles.secondaryButtonText}>Nueva Foto</Text>
-                            </TouchableOpacity>
+                            {/* Botones de acción */}
+                            <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.marginTop16]}>
+                                <TouchableOpacity
+                                    style={[globalStyles.secondaryButton, { flex: 0.48 }]}
+                                    onPress={resetRecognition}
+                                    disabled={loading}
+                                >
+                                    <Text style={globalStyles.secondaryButtonText}>Nueva Foto</Text>
+                                </TouchableOpacity>
 
-                            <TouchableOpacity
-                                style={[globalStyles.primaryButton, { flex: 0.48 }]}
-                                onPress={() => navigation.navigate('RecognitionHistory')}
-                                disabled={loading}
-                            >
-                                <Text style={globalStyles.buttonText}>Ver Historial</Text>
-                            </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[globalStyles.primaryButton, { flex: 0.48 }]}
+                                    onPress={() => navigation.navigate('RecognitionHistory')}
+                                    disabled={loading}
+                                >
+                                    <Text style={globalStyles.buttonText}>Ver Historial</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
+                    </ScrollView>
                 )}
             </View>
         </SafeAreaView>

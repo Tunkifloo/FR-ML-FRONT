@@ -14,6 +14,7 @@ interface ResultCardProps {
 }
 
 export const ResultCard: React.FC<ResultCardProps> = ({ result, imageUri }) => {
+    // FUNCIONES HELPER CON VERIFICACIONES DE SEGURIDAD
     const getConfidenceColor = (confidence: number) => {
         if (confidence >= 80) return colors.success;
         if (confidence >= 60) return colors.warning;
@@ -28,37 +29,93 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, imageUri }) => {
         return recognized ? colors.success : colors.secondary;
     };
 
+    const formatTimestamp = (timestamp: string): string => {
+        try {
+            if (!timestamp) return 'Fecha no disponible';
+            return new Date(timestamp).toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        } catch {
+            return timestamp || 'Fecha inválida';
+        }
+    };
+
+    // VERIFICACIONES DE SEGURIDAD PARA TODAS LAS PROPIEDADES
+    const safeResult = {
+        reconocido: result?.reconocido ?? false,
+        confianza: typeof result?.confianza === 'number' ? result.confianza : 0,
+        metodo: result?.metodo || 'Desconocido',
+        tiempo_procesamiento: typeof result?.tiempo_procesamiento === 'number' ? result.tiempo_procesamiento : 0,
+        timestamp: result?.timestamp || new Date().toISOString(),
+        imagen_info: {
+            dimensiones: result?.imagen_info?.dimensiones || 'No disponible',
+            canales: typeof result?.imagen_info?.canales === 'number' ? result.imagen_info.canales : 0,
+            tamano_bytes: typeof result?.imagen_info?.tamano_bytes === 'number' ? result.imagen_info.tamano_bytes : 0,
+        },
+        persona_info: result?.persona_info ? {
+            nombre: result.persona_info.nombre || 'Nombre no disponible',
+            apellido: result.persona_info.apellido || '',
+            id_estudiante: result.persona_info.id_estudiante || null,
+            requisitoriado: result.persona_info.requisitoriado ?? false,
+            tipo_requisitoria: result.persona_info.tipo_requisitoria || null,
+        } : null,
+        alerta_seguridad: result?.alerta_seguridad || null,
+        historial_id: result?.historial_id || null,
+    };
+
     return (
         <View>
             {/* Alerta de seguridad si existe */}
-            {result.alerta_seguridad && (
-                <AlertBanner alert={result.alerta_seguridad} />
+            {safeResult.alerta_seguridad && (
+                <AlertBanner alert={safeResult.alerta_seguridad} />
             )}
 
             <Card title="Resultado del Reconocimiento">
                 <View style={globalStyles.recognitionResult}>
                     {/* Imagen procesada */}
                     {imageUri && (
-                        <Image
-                            source={{ uri: imageUri }}
-                            style={{
-                                width: 120,
-                                height: 120,
-                                borderRadius: 60,
-                                marginBottom: 16,
-                            }}
-                        />
+                        <View style={{
+                            alignItems: 'center',
+                            marginBottom: 20,
+                        }}>
+                            <Image
+                                source={{ uri: imageUri }}
+                                style={{
+                                    width: 120,
+                                    height: 120,
+                                    borderRadius: 60,
+                                    borderWidth: 3,
+                                    borderColor: getStatusColor(safeResult.reconocido),
+                                }}
+                            />
+                        </View>
                     )}
 
                     {/* Estado del reconocimiento */}
-                    <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
+                    <View style={[
+                        globalStyles.row,
+                        globalStyles.alignCenter,
+                        globalStyles.center,
+                        { marginBottom: 20 }
+                    ]}>
                         <Ionicons
-                            name={getStatusIcon(result.reconocido)}
+                            name={getStatusIcon(safeResult.reconocido)}
                             size={32}
-                            color={getStatusColor(result.reconocido)}
+                            color={getStatusColor(safeResult.reconocido)}
                         />
-                        <Text style={[typography.h3, { marginLeft: 8, color: getStatusColor(result.reconocido) }]}>
-                            {result.reconocido ? 'RECONOCIDO' : 'NO RECONOCIDO'}
+                        <Text style={[
+                            typography.h3,
+                            {
+                                marginLeft: 12,
+                                color: getStatusColor(safeResult.reconocido),
+                                fontWeight: 'bold',
+                            }
+                        ]}>
+                            {safeResult.reconocido ? 'RECONOCIDO' : 'NO RECONOCIDO'}
                         </Text>
                     </View>
 
@@ -66,32 +123,79 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, imageUri }) => {
                     <View
                         style={[
                             globalStyles.confidenceCircle,
-                            { backgroundColor: getConfidenceColor(result.confianza) }
+                            {
+                                backgroundColor: getConfidenceColor(safeResult.confianza),
+                                marginBottom: 20,
+                            }
                         ]}
                     >
-                        <Text style={[typography.confidenceScore, { color: colors.surface }]}>
-                            {result.confianza.toFixed(1)}%
+                        <Text style={[
+                            typography.confidenceScore,
+                            {
+                                color: colors.surface,
+                                fontSize: 24,
+                                fontWeight: 'bold',
+                            }
+                        ]}>
+                            {safeResult.confianza.toFixed(1)}%
                         </Text>
-                        <Text style={[typography.caption, { color: colors.surface }]}>
+                        <Text style={[
+                            typography.caption,
+                            {
+                                color: colors.surface,
+                                fontSize: 12,
+                                fontWeight: '600',
+                            }
+                        ]}>
                             Confianza
                         </Text>
                     </View>
 
                     {/* Información de la persona */}
-                    {result.persona_info && (
-                        <View style={globalStyles.marginTop16}>
-                            <Text style={typography.h4}>
-                                {result.persona_info.nombre} {result.persona_info.apellido}
+                    {safeResult.persona_info && (
+                        <View style={{
+                            width: '100%',
+                            backgroundColor: colors.background,
+                            borderRadius: 12,
+                            padding: 16,
+                            marginBottom: 20,
+                        }}>
+                            <Text style={[
+                                typography.h4,
+                                {
+                                    textAlign: 'center',
+                                    marginBottom: 8,
+                                }
+                            ]}>
+                                {safeResult.persona_info.nombre} {safeResult.persona_info.apellido}
                             </Text>
-                            {result.persona_info.id_estudiante && (
-                                <Text style={[typography.body2, globalStyles.marginTop8]}>
-                                    ID: {result.persona_info.id_estudiante}
+
+                            {safeResult.persona_info.id_estudiante && (
+                                <Text style={[
+                                    typography.body2,
+                                    {
+                                        textAlign: 'center',
+                                        marginBottom: 8,
+                                    }
+                                ]}>
+                                    ID Estudiante: {safeResult.persona_info.id_estudiante}
                                 </Text>
                             )}
-                            {result.persona_info.requisitoriado && (
-                                <View style={[globalStyles.statusBadge, globalStyles.errorBadge, globalStyles.marginTop8]}>
-                                    <Text style={globalStyles.badgeText}>
-                                        REQUISITORIADO: {result.persona_info.tipo_requisitoria}
+
+                            {safeResult.persona_info.requisitoriado && (
+                                <View style={[
+                                    globalStyles.statusBadge,
+                                    globalStyles.errorBadge,
+                                    {
+                                        alignSelf: 'center',
+                                        marginTop: 8,
+                                    }
+                                ]}>
+                                    <Text style={[
+                                        globalStyles.badgeText,
+                                        { fontSize: 12, fontWeight: 'bold' }
+                                    ]}>
+                                        🚨 REQUISITORIADO: {safeResult.persona_info.tipo_requisitoria || 'Sin especificar'}
                                     </Text>
                                 </View>
                             )}
@@ -99,19 +203,67 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, imageUri }) => {
                     )}
 
                     {/* Detalles técnicos */}
-                    <View style={[globalStyles.marginTop24, globalStyles.paddingVertical16, { borderTopWidth: 1, borderTopColor: colors.border }]}>
-                        <Text style={[typography.body2, globalStyles.marginBottom8]}>
-                            Algoritmo: {result.metodo}
+                    <View style={{
+                        width: '100%',
+                        borderTopWidth: 1,
+                        borderTopColor: colors.border,
+                        paddingTop: 16,
+                    }}>
+                        <Text style={[
+                            typography.h4,
+                            {
+                                textAlign: 'center',
+                                marginBottom: 12,
+                                color: colors.textSecondary,
+                            }
+                        ]}>
+                            Detalles Técnicos
                         </Text>
-                        <Text style={[typography.body2, globalStyles.marginBottom8]}>
-                            Tiempo: {result.tiempo_procesamiento.toFixed(2)}s
-                        </Text>
-                        <Text style={[typography.body2, globalStyles.marginBottom8]}>
-                            Imagen: {result.imagen_info.dimensiones}
-                        </Text>
-                        <Text style={typography.caption}>
-                            {new Date(result.timestamp).toLocaleString()}
-                        </Text>
+
+                        <View style={{
+                            backgroundColor: colors.background,
+                            borderRadius: 8,
+                            padding: 12,
+                        }}>
+                            <Text style={[
+                                typography.body2,
+                                { marginBottom: 6 }
+                            ]}>
+                                🧠 Algoritmo: {safeResult.metodo}
+                            </Text>
+                            <Text style={[
+                                typography.body2,
+                                { marginBottom: 6 }
+                            ]}>
+                                ⏱️ Tiempo: {safeResult.tiempo_procesamiento.toFixed(2)}s
+                            </Text>
+                            <Text style={[
+                                typography.body2,
+                                { marginBottom: 6 }
+                            ]}>
+                                📐 Imagen: {safeResult.imagen_info.dimensiones}
+                            </Text>
+                            <Text style={[
+                                typography.body2,
+                                { marginBottom: 6 }
+                            ]}>
+                                📊 Canales: {safeResult.imagen_info.canales}
+                            </Text>
+                            <Text style={[
+                                typography.body2,
+                                { marginBottom: 6 }
+                            ]}>
+                                💾 Tamaño: {safeResult.imagen_info.tamano_bytes > 0 ? (safeResult.imagen_info.tamano_bytes / 1024).toFixed(1) + ' KB' : 'No disponible'}
+                            </Text>
+                            <Text style={typography.caption}>
+                                🕒 {formatTimestamp(safeResult.timestamp)}
+                            </Text>
+                            {safeResult.historial_id && (
+                                <Text style={typography.caption}>
+                                    🆔 ID Historial: #{safeResult.historial_id}
+                                </Text>
+                            )}
+                        </View>
                     </View>
                 </View>
             </Card>
