@@ -12,7 +12,13 @@ import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
-export default function HomeScreen(): JSX.Element {
+interface HomeScreenProps {
+    navigation: {
+        navigate: (screen: string, params?: any) => void;
+    };
+}
+
+export default function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [userStats, setUserStats] = useState<EstadisticasUsuarios | null>(null);
@@ -64,6 +70,15 @@ export default function HomeScreen(): JSX.Element {
             setError(err.response?.data?.detail || 'Error al entrenar modelo');
             setLoading(false);
         }
+    };
+
+    // Funciones de navegación
+    const navigateToRecognition = () => {
+        navigation.navigate('RecognitionTab');
+    };
+
+    const navigateToAddUser = () => {
+        navigation.navigate('AddUser');
     };
 
     if (loading && !userStats) {
@@ -165,7 +180,7 @@ export default function HomeScreen(): JSX.Element {
                         </Card>
                     )}
 
-                    {/* Estado del Entrenamiento - DATOS ACTUALIZADOS */}
+                    {/* Estado del Entrenamiento */}
                     {trainingStatus && (
                         <Card title="Entrenamiento ML">
                             <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
@@ -222,7 +237,7 @@ export default function HomeScreen(): JSX.Element {
                         </Card>
                     )}
 
-                    {/* Estadísticas de Alertas - DATOS ACTUALIZADOS */}
+                    {/* Estadísticas de Alertas */}
                     {alertStats && (
                         <Card title="Alertas de Seguridad">
                             <View style={[globalStyles.row, globalStyles.spaceBetween]}>
@@ -290,12 +305,13 @@ export default function HomeScreen(): JSX.Element {
                         </Text>
                     </Card>
 
-                    {/* Acciones Rápidas */}
+                    {/* Acciones Rápidas - FUNCIONALES */}
                     <Card title="Acciones Rápidas">
                         <View style={[globalStyles.row, globalStyles.spaceBetween]}>
                             <TouchableOpacity
                                 style={[globalStyles.primaryButton, { flex: 0.48 }]}
-                                onPress={() => {/* Navigate to Recognition */}}
+                                onPress={navigateToRecognition}
+                                activeOpacity={0.7}
                             >
                                 <Ionicons name="camera" size={20} color={colors.surface} />
                                 <Text style={[globalStyles.buttonText, { marginTop: 4 }]}>
@@ -305,7 +321,8 @@ export default function HomeScreen(): JSX.Element {
 
                             <TouchableOpacity
                                 style={[globalStyles.secondaryButton, { flex: 0.48 }]}
-                                onPress={() => {/* Navigate to Users */}}
+                                onPress={navigateToAddUser}
+                                activeOpacity={0.7}
                             >
                                 <Ionicons name="person-add" size={20} color={colors.primary} />
                                 <Text style={[globalStyles.secondaryButtonText, { marginTop: 4 }]}>

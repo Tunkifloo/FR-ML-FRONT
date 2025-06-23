@@ -14,8 +14,11 @@ import StatisticsScreen from '../screens/StatisticsScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import RecognitionHistoryScreen from '../screens/RecognitionHistoryScreen';
+import AddUserScreen from '../screens/AddUserScreen';
+import UserDetailScreen from '../screens/UserDetailScreen';
+import EditUserScreen from '../screens/EditUserScreen';
 
-// Tipos para navegación
+// Tipos para navegación actualizados
 export type RootStackParamList = {
     HomeTab: undefined;
     RecognitionTab: undefined;
@@ -29,12 +32,15 @@ export type RootStackParamList = {
     Alerts: undefined;
     Settings: undefined;
     RecognitionHistory: undefined;
+    AddUser: undefined;
+    UserDetail: { userId: number };
+    EditUser: { userId: number };
 };
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
-// Stack Navigator para cada sección
+// Stack Navigator para Home
 function HomeStack() {
     return (
         <Stack.Navigator
@@ -53,10 +59,16 @@ function HomeStack() {
                 component={HomeScreen}
                 options={{ title: 'Dashboard' }}
             />
+            <Stack.Screen
+                name="AddUser"
+                component={AddUserScreen}
+                options={{ title: 'Añadir Usuario' }}
+            />
         </Stack.Navigator>
     );
 }
 
+// Stack Navigator para Recognition
 function RecognitionStack() {
     return (
         <Stack.Navigator
@@ -84,6 +96,7 @@ function RecognitionStack() {
     );
 }
 
+// Stack Navigator para Users
 function UsersStack() {
     return (
         <Stack.Navigator
@@ -102,10 +115,26 @@ function UsersStack() {
                 component={UsersScreen}
                 options={{ title: 'Usuarios' }}
             />
+            <Stack.Screen
+                name="AddUser"
+                component={AddUserScreen}
+                options={{ title: 'Añadir Usuario' }}
+            />
+            <Stack.Screen
+                name="UserDetail"
+                component={UserDetailScreen}
+                options={{ title: 'Detalles del Usuario' }}
+            />
+            <Stack.Screen
+                name="EditUser"
+                component={EditUserScreen}
+                options={{ title: 'Editar Usuario' }}
+            />
         </Stack.Navigator>
     );
 }
 
+// Stack Navigator para Statistics
 function StatisticsStack() {
     return (
         <Stack.Navigator

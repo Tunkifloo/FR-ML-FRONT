@@ -12,13 +12,21 @@ import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
-export default function UsersScreen(): JSX.Element {
+interface UsersScreenProps {
+    navigation: {
+        navigate: (screen: string, params?: any) => void;
+    };
+}
+
+export default function UsersScreen({ navigation }: UsersScreenProps): JSX.Element {
     const [users, setUsers] = useState<Usuario[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [totalUsers, setTotalUsers] = useState(0);
 
     const loadUsers = async (pageNum: number = 1, refresh: boolean = false) => {
         try {
@@ -26,17 +34,19 @@ export default function UsersScreen(): JSX.Element {
                 setError(null);
                 setUsers([]);
                 setPage(1);
+                setHasMore(true);
             }
 
             const response = await UserService.getUsers(pageNum, 20);
             const newUsers = response.data;
 
-            if (refresh) {
+            if (refresh || pageNum === 1) {
                 setUsers(newUsers);
             } else {
                 setUsers(prev => [...prev, ...newUsers]);
             }
 
+            setTotalUsers(response.total);
             setHasMore(pageNum < response.total_paginas);
             setPage(pageNum);
         } catch (err: any) {
@@ -44,6 +54,7 @@ export default function UsersScreen(): JSX.Element {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setLoadingMore(false);
         }
     };
 
@@ -57,39 +68,70 @@ export default function UsersScreen(): JSX.Element {
     };
 
     const loadMore = () => {
-        if (!loading && hasMore) {
-            setLoading(true);
+        if (!loading && !loadingMore && hasMore) {
+            setLoadingMore(true);
             loadUsers(page + 1);
         }
     };
 
+    const handleUserPress = (user: Usuario) => {
+        navigation.navigate('UserDetail', { userId: user.id });
+    };
+
+    const handleEditUser = (user: Usuario) => {
+        navigation.navigate('EditUser', { userId: user.id });
+    };
+
     const handleDeleteUser = (user: Usuario) => {
         Alert.alert(
-            'Eliminar Usuario',
-            `¿Estás seguro de eliminar a ${user.nombre} ${user.apellido}?`,
+            '⚠️ Eliminar Usuario',
+            `¿Estás seguro de eliminar a ${user.nombre} ${user.apellido}?\n\nEsta acción desactivará al usuario pero mantendrá sus datos.`,
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
-                    text: 'Eliminar',
+                    text: 'Eliminar Definitivamente',
                     style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await UserService.deleteUser(user.id);
-                            onRefresh();
-                        } catch (err: any) {
-                            Alert.alert('Error', err.response?.data?.detail || 'Error al eliminar usuario');
-                        }
-                    },
+                    onPress: () => confirmDeleteUser(user, true)
                 },
+                {
+                    text: 'Desactivar',
+                    onPress: () => confirmDeleteUser(user, false)
+                }
             ]
         );
+    };
+
+    const confirmDeleteUser = async (user: Usuario, eliminarDefinitivo: boolean) => {
+        try {
+            setLoading(true);
+            await UserService.deleteUser(user.id, eliminarDefinitivo);
+
+            Alert.alert(
+                'Éxito',
+                eliminarDefinitivo
+                    ? `Usuario ${user.nombre} ${user.apellido} eliminado definitivamente`
+                    : `Usuario ${user.nombre} ${user.apellido} desactivado`,
+                [{ text: 'OK' }]
+            );
+
+            // Recargar lista
+            onRefresh();
+        } catch (err: any) {
+            Alert.alert('Error', err.message || 'Error al eliminar usuario');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddUser = () => {
+        navigation.navigate('AddUser');
     };
 
     const renderUser = ({ item }: { item: Usuario }) => (
         <UserCard
             user={item}
-            onPress={() => {/* Navigate to user details */}}
-            onEdit={() => {/* Navigate to edit user */}}
+            onPress={() => handleUserPress(item)}
+            onEdit={() => handleEditUser(item)}
             onDelete={() => handleDeleteUser(item)}
         />
     );
@@ -99,15 +141,53 @@ export default function UsersScreen(): JSX.Element {
             <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter]}>
                 <View>
                     <Text style={typography.h3}>Usuarios Registrados</Text>
-                    <Text style={typography.body2}>{users.length} usuarios cargados</Text>
+                    <Text style={typography.body2}>
+                        {totalUsers} usuarios • {users.length} cargados
+                    </Text>
+                    {hasMore && (
+                        <Text style={typography.caption}>
+                            Página {page} • Toca al final para cargar más
+                        </Text>
+                    )}
                 </View>
                 <TouchableOpacity
-                    style={globalStyles.primaryButton}
-                    onPress={() => {/* Navigate to add user */}}
+                    style={[globalStyles.primaryButton, { paddingHorizontal: 16 }]}
+                    onPress={handleAddUser}
+                    activeOpacity={0.7}
                 >
                     <Ionicons name="person-add" size={20} color={colors.surface} />
                 </TouchableOpacity>
             </View>
+
+            {/* Estadísticas rápidas */}
+            {users.length > 0 && (
+                <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.marginTop16]}>
+                    <View style={globalStyles.alignCenter}>
+                        <Text style={[typography.h3, { color: colors.primary }]}>
+                            {users.filter(u => u.activo).length}
+                        </Text>
+                        <Text style={typography.caption}>Activos</Text>
+                    </View>
+                    <View style={globalStyles.alignCenter}>
+                        <Text style={[typography.h3, { color: colors.secondary }]}>
+                            {users.filter(u => u.requisitoriado).length}
+                        </Text>
+                        <Text style={typography.caption}>Requisitoriados</Text>
+                    </View>
+                    <View style={globalStyles.alignCenter}>
+                        <Text style={[typography.h3, { color: colors.info }]}>
+                            {Math.round(users.reduce((sum, u) => sum + u.total_imagenes, 0) / users.length) || 0}
+                        </Text>
+                        <Text style={typography.caption}>Img/Usuario</Text>
+                    </View>
+                    <View style={globalStyles.alignCenter}>
+                        <Text style={[typography.h3, { color: colors.warning }]}>
+                            {users.filter(u => !u.activo).length}
+                        </Text>
+                        <Text style={typography.caption}>Inactivos</Text>
+                    </View>
+                </View>
+            )}
         </Card>
     );
 
@@ -123,13 +203,27 @@ export default function UsersScreen(): JSX.Element {
                 </Text>
                 <TouchableOpacity
                     style={[globalStyles.primaryButton, globalStyles.marginTop16]}
-                    onPress={() => {/* Navigate to add user */}}
+                    onPress={handleAddUser}
                 >
-                    <Text style={globalStyles.buttonText}>Añadir Usuario</Text>
+                    <View style={[globalStyles.row, globalStyles.alignCenter]}>
+                        <Ionicons name="person-add" size={20} color={colors.surface} />
+                        <Text style={[globalStyles.buttonText, { marginLeft: 8 }]}>
+                            Añadir Primer Usuario
+                        </Text>
+                    </View>
                 </TouchableOpacity>
             </View>
         </Card>
     );
+
+    const renderFooter = () => {
+        if (!loadingMore) return null;
+        return (
+            <View style={globalStyles.paddingVertical16}>
+                <Loading message="Cargando más usuarios..." />
+            </View>
+        );
+    };
 
     if (loading && users.length === 0) {
         return <Loading message="Cargando usuarios..." />;
@@ -150,15 +244,23 @@ export default function UsersScreen(): JSX.Element {
                     keyExtractor={(item) => item.id.toString()}
                     ListHeaderComponent={renderHeader}
                     ListEmptyComponent={!loading ? renderEmpty : null}
+                    ListFooterComponent={renderFooter}
                     contentContainerStyle={globalStyles.paddingHorizontal16}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={[colors.primary]}
+                            tintColor={colors.primary}
+                        />
                     }
                     onEndReached={loadMore}
                     onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                        loading ? <Loading message="Cargando más usuarios..." /> : null
-                    }
+                    showsVerticalScrollIndicator={false}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={10}
+                    removeClippedSubviews={true}
                 />
             </View>
         </SafeAreaView>
