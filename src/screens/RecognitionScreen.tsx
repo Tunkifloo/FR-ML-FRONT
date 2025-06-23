@@ -14,7 +14,13 @@ import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
-export default function RecognitionScreen(): JSX.Element {
+interface RecognitionScreenProps {
+    navigation: {
+        navigate: (screenName: string) => void;
+    };
+}
+
+export default function RecognitionScreen({ navigation }: RecognitionScreenProps): JSX.Element {
     const [permission, requestPermission] = useCameraPermissions();
     const [facing, setFacing] = useState<'front' | 'back'>('back');
     const [imageUri, setImageUri] = useState<string | null>(null);
@@ -208,6 +214,14 @@ export default function RecognitionScreen(): JSX.Element {
                             onPress={resetRecognition}
                         >
                             <Text style={globalStyles.buttonText}>Nueva Foto</Text>
+                        </TouchableOpacity>
+
+                        {/* Botón para ver historial */}
+                        <TouchableOpacity
+                            style={[globalStyles.secondaryButton, globalStyles.marginTop16]}
+                            onPress={() => navigation.navigate('RecognitionHistory')}
+                        >
+                            <Text style={globalStyles.secondaryButtonText}>Ver Historial</Text>
                         </TouchableOpacity>
                     </View>
                 )}

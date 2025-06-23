@@ -13,6 +13,7 @@ import UsersScreen from '../screens/UsersScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import RecognitionHistoryScreen from '../screens/RecognitionHistoryScreen';
 
 // Tipos para navegación
 export type RootStackParamList = {
@@ -27,6 +28,7 @@ export type RootStackParamList = {
     Statistics: undefined;
     Alerts: undefined;
     Settings: undefined;
+    RecognitionHistory: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootStackParamList>();
@@ -72,6 +74,11 @@ function RecognitionStack() {
                 name="Recognition"
                 component={RecognitionScreen}
                 options={{ title: 'Reconocimiento' }}
+            />
+            <Stack.Screen
+                name="RecognitionHistory"
+                component={RecognitionHistoryScreen}
+                options={{ title: 'Historial' }}
             />
         </Stack.Navigator>
     );

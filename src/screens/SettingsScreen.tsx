@@ -6,13 +6,63 @@ import { Card } from '../components/common/Card';
 import { Loading } from '../components/common/Loading';
 import { UserService } from '../services/userService';
 import { RecognitionService } from '../services/recognitionService';
-import { EstadoEntrenamiento, ModelInfo } from '../types';
+import { EstadoEntrenamiento } from '../types';
 import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
 
+interface DetailedModelInfo {
+    system_info: {
+        is_trained: boolean;
+        model_version: string;
+        combination_method: string;
+        confidence_threshold: number;
+        training_sessions: number;
+        data_type_handling: string;
+    };
+    eigenfaces_info: {
+        algorithm: string;
+        is_trained: boolean;
+        n_components: number;
+        image_size: number[];
+        total_embeddings: number;
+        unique_persons: number;
+        threshold_distance: number;
+        variance_explained: number;
+        model_version: string;
+        stability_diagnostics: {
+            infinite_embeddings: number;
+            nan_embeddings: number;
+            stable_embeddings: number;
+            stability_ratio: number;
+        };
+    };
+    lbp_info: {
+        algorithm: string;
+        is_trained: boolean;
+        radius: number;
+        n_points: number;
+        grid_size: number[];
+        method: string;
+        image_size: number[];
+        total_features: number;
+        unique_persons: number;
+        threshold_similarity: number;
+        feature_vector_size: number;
+        data_type_requirement: string;
+        preprocessing_steps: string[];
+        model_version: string;
+    };
+    weights: {
+        eigenfaces: number;
+        lbp: number;
+    };
+    last_training: string | null;
+    fixes_applied: string[];
+}
+
 export default function SettingsScreen(): JSX.Element {
-    const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+    const [modelInfo, setModelInfo] = useState<DetailedModelInfo | null>(null);
     const [trainingStatus, setTrainingStatus] = useState<EstadoEntrenamiento | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -62,7 +112,6 @@ export default function SettingsScreen(): JSX.Element {
     const handleReloadModel = async () => {
         try {
             setLoading(true);
-            // Recargar información del modelo
             await loadSystemInfo();
             Alert.alert('Éxito', 'Información del modelo actualizada');
         } catch (err: any) {
@@ -77,46 +126,107 @@ export default function SettingsScreen(): JSX.Element {
             <ScrollView style={globalStyles.content}>
                 {loading && <Loading message="Procesando..." />}
 
-                {/* Información del Sistema */}
+                {/* Estado del Sistema */}
                 <Card title="Estado del Sistema">
                     <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                         <Ionicons
-                            name={modelInfo?.model_loaded ? "checkmark-circle" : "close-circle"}
+                            name={modelInfo?.system_info?.is_trained ? "checkmark-circle" : "close-circle"}
                             size={24}
-                            color={modelInfo?.model_loaded ? colors.success : colors.secondary}
+                            color={modelInfo?.system_info?.is_trained ? colors.success : colors.secondary}
                         />
                         <Text style={[typography.body1, { marginLeft: 8 }]}>
-                            Modelo {modelInfo?.model_loaded ? 'Cargado' : 'No Cargado'}
+                            Modelo {modelInfo?.system_info?.is_trained ? 'Entrenado' : 'Sin Entrenar'}
                         </Text>
                     </View>
 
                     {modelInfo && (
                         <View>
                             <Text style={typography.body2}>
-                                📊 Estado: {modelInfo.training_status}
+                                📊 Versión: {modelInfo.system_info.model_version}
                             </Text>
                             <Text style={typography.body2}>
-                                👥 Personas en modelo: {modelInfo.total_persons}
+                                👥 Personas: {modelInfo.eigenfaces_info.unique_persons}
                             </Text>
                             <Text style={typography.body2}>
-                                📷 Imágenes totales: {modelInfo.total_images}
+                                📷 Imágenes: {modelInfo.eigenfaces_info.total_embeddings}
                             </Text>
                             <Text style={typography.body2}>
-                                🧠 Algoritmos: {modelInfo.algorithms?.join(', ') || 'No disponible'}
+                                🧠 Método: {modelInfo.system_info.combination_method}
                             </Text>
-                            {modelInfo.model_accuracy && (
-                                <Text style={typography.body2}>
-                                    🎯 Precisión: {modelInfo.model_accuracy.toFixed(1)}%
-                                </Text>
-                            )}
-                            {modelInfo.last_training && (
-                                <Text style={typography.body2}>
-                                    🕒 Último entrenamiento: {new Date(modelInfo.last_training).toLocaleString()}
-                                </Text>
-                            )}
+                            <Text style={typography.body2}>
+                                🎯 Umbral confianza: {modelInfo.system_info.confidence_threshold}%
+                            </Text>
+                            <Text style={typography.body2}>
+                                ⚖️ Pesos: Eigenfaces {(modelInfo.weights.eigenfaces * 100).toFixed(0)}%, LBP {(modelInfo.weights.lbp * 100).toFixed(0)}%
+                            </Text>
                         </View>
                     )}
                 </Card>
+
+                {/* Información de Algoritmos */}
+                {modelInfo && (
+                    <>
+                        {/* Eigenfaces */}
+                        <Card title="Eigenfaces (PCA)">
+                            <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom8]}>
+                                <Ionicons
+                                    name={modelInfo.eigenfaces_info.is_trained ? "checkmark-circle" : "close-circle"}
+                                    size={20}
+                                    color={modelInfo.eigenfaces_info.is_trained ? colors.success : colors.secondary}
+                                />
+                                <Text style={[typography.body1, { marginLeft: 8 }]}>
+                                    {modelInfo.eigenfaces_info.is_trained ? 'Entrenado' : 'Sin entrenar'}
+                                </Text>
+                            </View>
+
+                            <Text style={typography.body2}>
+                                🧮 Componentes: {modelInfo.eigenfaces_info.n_components}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📐 Tamaño imagen: {modelInfo.eigenfaces_info.image_size.join('x')}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📊 Varianza explicada: {(modelInfo.eigenfaces_info.variance_explained * 100).toFixed(2)}%
+                            </Text>
+                            <Text style={typography.body2}>
+                                🎯 Umbral distancia: {modelInfo.eigenfaces_info.threshold_distance}
+                            </Text>
+                            <Text style={typography.body2}>
+                                ✅ Estabilidad: {(modelInfo.eigenfaces_info.stability_diagnostics.stability_ratio * 100).toFixed(1)}%
+                            </Text>
+                        </Card>
+
+                        {/* LBP */}
+                        <Card title="Local Binary Patterns">
+                            <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom8]}>
+                                <Ionicons
+                                    name={modelInfo.lbp_info.is_trained ? "checkmark-circle" : "close-circle"}
+                                    size={20}
+                                    color={modelInfo.lbp_info.is_trained ? colors.success : colors.secondary}
+                                />
+                                <Text style={[typography.body1, { marginLeft: 8 }]}>
+                                    {modelInfo.lbp_info.is_trained ? 'Entrenado' : 'Sin entrenar'}
+                                </Text>
+                            </View>
+
+                            <Text style={typography.body2}>
+                                📐 Radio: {modelInfo.lbp_info.radius}, Puntos: {modelInfo.lbp_info.n_points}
+                            </Text>
+                            <Text style={typography.body2}>
+                                🔢 Vector características: {modelInfo.lbp_info.feature_vector_size}
+                            </Text>
+                            <Text style={typography.body2}>
+                                🎯 Umbral similitud: {modelInfo.lbp_info.threshold_similarity}
+                            </Text>
+                            <Text style={typography.body2}>
+                                📊 Grid: {modelInfo.lbp_info.grid_size.join('x')}
+                            </Text>
+                            <Text style={typography.body2}>
+                                🔧 Método: {modelInfo.lbp_info.method}
+                            </Text>
+                        </Card>
+                    </>
+                )}
 
                 {/* Estado del Entrenamiento */}
                 <Card title="Entrenamiento ML">
@@ -208,6 +318,20 @@ export default function SettingsScreen(): JSX.Element {
                         </TouchableOpacity>
                     </View>
                 </Card>
+
+                {/* Mejoras Aplicadas */}
+                {modelInfo && modelInfo.fixes_applied && (
+                    <Card title="Mejoras del Sistema">
+                        {modelInfo.fixes_applied.map((fix, index) => (
+                            <View key={index} style={[globalStyles.row, globalStyles.marginBottom8]}>
+                                <Ionicons name="checkmark" size={16} color={colors.success} />
+                                <Text style={[typography.body2, { marginLeft: 8, flex: 1 }]}>
+                                    {fix}
+                                </Text>
+                            </View>
+                        ))}
+                    </Card>
+                )}
 
                 {/* Información de la App */}
                 <Card title="Información">

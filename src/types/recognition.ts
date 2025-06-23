@@ -19,6 +19,7 @@ export interface RecognitionResult {
         tipo_requisitoria?: string;
     };
     alerta_seguridad?: AlertaSeguridad;
+    detalles_tecnicos?: any;
 }
 
 export interface AlertaSeguridad {
@@ -89,14 +90,4 @@ export interface ModelInfo {
     algorithms: string[];
     model_accuracy?: number;
     model_size_mb?: number;
-}
-
-export interface EstadoEntrenamiento {
-    is_trained: boolean;
-    training_in_progress: boolean;
-    last_training_date?: string;
-    total_persons: number;
-    total_training_images: number;
-    model_accuracy?: number;
-    next_training_suggested: boolean;
 }

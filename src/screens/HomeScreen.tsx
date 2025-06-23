@@ -7,7 +7,7 @@ import { Loading } from '../components/common/Loading';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { UserService } from '../services/userService';
 import { RecognitionService } from '../services/recognitionService';
-import { EstadisticasUsuarios, ModelInfo, EstadoEntrenamiento } from '../types';
+import { EstadisticasUsuarios, DetailedModelInfo, TrainingStatus, AlertStats } from '../types';
 import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
@@ -16,8 +16,9 @@ export default function HomeScreen(): JSX.Element {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [userStats, setUserStats] = useState<EstadisticasUsuarios | null>(null);
-    const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
-    const [trainingStatus, setTrainingStatus] = useState<EstadoEntrenamiento | null>(null);
+    const [modelInfo, setModelInfo] = useState<DetailedModelInfo | null>(null);
+    const [trainingStatus, setTrainingStatus] = useState<TrainingStatus | null>(null);
+    const [alertStats, setAlertStats] = useState<AlertStats | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const loadDashboardData = async () => {
@@ -25,17 +26,20 @@ export default function HomeScreen(): JSX.Element {
             setError(null);
 
             // Cargar datos en paralelo
-            const [userStatsResponse, modelInfoResponse, trainingStatusResponse] = await Promise.all([
+            const [userStatsResponse, modelInfoResponse, trainingStatusResponse, alertStatsResponse] = await Promise.all([
                 UserService.getUserStatistics(),
                 RecognitionService.getModelInfo(),
                 UserService.getTrainingStatus(),
+                RecognitionService.getAlertsStatistics(),
             ]);
 
             setUserStats(userStatsResponse.data);
             setModelInfo(modelInfoResponse.data);
             setTrainingStatus(trainingStatusResponse.data);
+            setAlertStats(alertStatsResponse.data);
+
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Error al cargar datos del dashboard');
+            setError(err.response?.data?.detail || err.message || 'Error al cargar datos del dashboard');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -84,15 +88,15 @@ export default function HomeScreen(): JSX.Element {
                         <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter]}>
                             <View style={globalStyles.row}>
                                 <Ionicons
-                                    name={modelInfo?.model_loaded ? "checkmark-circle" : "close-circle"}
+                                    name={modelInfo?.system_info?.is_trained ? "checkmark-circle" : "close-circle"}
                                     size={24}
-                                    color={modelInfo?.model_loaded ? colors.success : colors.secondary}
+                                    color={modelInfo?.system_info?.is_trained ? colors.success : colors.secondary}
                                 />
                                 <Text style={[typography.body1, { marginLeft: 8 }]}>
-                                    Modelo {modelInfo?.model_loaded ? 'Activo' : 'Inactivo'}
+                                    Modelo {modelInfo?.system_info?.is_trained ? 'Entrenado' : 'Sin Entrenar'}
                                 </Text>
                             </View>
-                            {!modelInfo?.model_loaded && trainingStatus && trainingStatus.total_persons >= 2 && (
+                            {!modelInfo?.system_info?.is_trained && trainingStatus?.training_requirements.can_train && (
                                 <TouchableOpacity
                                     style={globalStyles.primaryButton}
                                     onPress={handleTrainModel}
@@ -105,11 +109,19 @@ export default function HomeScreen(): JSX.Element {
                         {modelInfo && (
                             <View style={globalStyles.marginTop16}>
                                 <Text style={typography.body2}>
-                                    Algoritmos: {modelInfo.algorithms?.join(', ') || 'No disponible'}
+                                    👥 Personas en modelo: {modelInfo.eigenfaces_info.unique_persons}
                                 </Text>
                                 <Text style={typography.body2}>
-                                    Última actualización: {modelInfo.last_training ?
-                                    new Date(modelInfo.last_training).toLocaleString() : 'Nunca'}
+                                    📸 Imágenes procesadas: {modelInfo.eigenfaces_info.total_embeddings}
+                                </Text>
+                                <Text style={typography.body2}>
+                                    🧠 Algoritmos: Eigenfaces + LBP
+                                </Text>
+                                <Text style={typography.body2}>
+                                    📊 Versión: {modelInfo.system_info.model_version}
+                                </Text>
+                                <Text style={typography.body2}>
+                                    🎯 Confianza mínima: {modelInfo.system_info.confidence_threshold}%
                                 </Text>
                             </View>
                         )}
@@ -146,6 +158,9 @@ export default function HomeScreen(): JSX.Element {
                                 <Text style={typography.body2}>
                                     📊 {userStats.imagenes.promedio_por_usuario.toFixed(1)} imágenes por usuario
                                 </Text>
+                                <Text style={typography.body2}>
+                                    🎯 {userStats.usuarios.porcentaje_requisitoriados.toFixed(1)}% requisitoriados
+                                </Text>
                             </View>
                         </Card>
                     )}
@@ -155,37 +170,116 @@ export default function HomeScreen(): JSX.Element {
                         <Card title="Entrenamiento ML">
                             <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                                 <Ionicons
-                                    name={trainingStatus.is_trained ? "school" : "alert-circle"}
+                                    name={trainingStatus.model_trained ? "school" : "alert-circle"}
                                     size={24}
-                                    color={trainingStatus.is_trained ? colors.success : colors.warning}
+                                    color={trainingStatus.model_trained ? colors.success : colors.warning}
                                 />
                                 <Text style={[typography.body1, { marginLeft: 8 }]}>
-                                    {trainingStatus.is_trained ? 'Modelo Entrenado' : 'Entrenamiento Requerido'}
+                                    {trainingStatus.model_trained ? 'Modelo Entrenado' : 'Entrenamiento Requerido'}
                                 </Text>
                             </View>
 
                             <Text style={typography.body2}>
-                                👥 {trainingStatus.total_persons} personas en el modelo
+                                👥 {trainingStatus.training_requirements.users_with_images} usuarios con imágenes
                             </Text>
                             <Text style={typography.body2}>
-                                📷 {trainingStatus.total_training_images} imágenes de entrenamiento
+                                📷 {trainingStatus.training_requirements.total_images} imágenes de entrenamiento
+                            </Text>
+                            <Text style={typography.body2}>
+                                📊 Versión: {trainingStatus.model_version}
+                            </Text>
+                            <Text style={typography.body2}>
+                                🤖 Entrenamiento automático: {trainingStatus.auto_training_enabled ? 'Activado' : 'Desactivado'}
                             </Text>
 
-                            {trainingStatus.model_accuracy && (
-                                <Text style={typography.body2}>
-                                    🎯 Precisión estimada: {trainingStatus.model_accuracy.toFixed(1)}%
+                            {/* Recomendación del sistema */}
+                            <View style={[
+                                globalStyles.statusBadge,
+                                trainingStatus.system_ready ? globalStyles.successBadge : globalStyles.warningBadge,
+                                globalStyles.marginTop8
+                            ]}>
+                                <Text style={globalStyles.badgeText}>
+                                    {trainingStatus.recommendation}
                                 </Text>
-                            )}
+                            </View>
 
-                            {trainingStatus.next_training_suggested && (
-                                <View style={[globalStyles.statusBadge, globalStyles.warningBadge, globalStyles.marginTop8]}>
-                                    <Text style={globalStyles.badgeText}>
-                                        Se recomienda reentrenar
-                                    </Text>
-                                </View>
+                            {/* Estado de correcciones */}
+                            <Text style={[typography.caption, globalStyles.marginTop8]}>
+                                {trainingStatus.fixes_status}
+                            </Text>
+
+                            {!trainingStatus.model_trained && trainingStatus.training_requirements.can_train && (
+                                <TouchableOpacity
+                                    style={[globalStyles.primaryButton, globalStyles.marginTop16]}
+                                    onPress={handleTrainModel}
+                                >
+                                    <Text style={globalStyles.buttonText}>Entrenar Modelo Ahora</Text>
+                                </TouchableOpacity>
                             )}
                         </Card>
                     )}
+
+                    {/* Estadísticas de Alertas */}
+                    {alertStats && (
+                        <Card title="Alertas de Seguridad">
+                            <View style={[globalStyles.row, globalStyles.spaceBetween]}>
+                                <View style={globalStyles.alignCenter}>
+                                    <Text style={[typography.h2, { color: colors.secondary }]}>
+                                        {alertStats.total_alerts}
+                                    </Text>
+                                    <Text style={typography.caption}>Total</Text>
+                                </View>
+                                <View style={globalStyles.alignCenter}>
+                                    <Text style={[typography.h2, { color: colors.secondary }]}>
+                                        {alertStats.by_level.HIGH}
+                                    </Text>
+                                    <Text style={typography.caption}>Críticas</Text>
+                                </View>
+                                <View style={globalStyles.alignCenter}>
+                                    <Text style={[typography.h2, { color: colors.warning }]}>
+                                        {alertStats.by_level.MEDIUM}
+                                    </Text>
+                                    <Text style={typography.caption}>Medias</Text>
+                                </View>
+                            </View>
+
+                            <View style={globalStyles.marginTop16}>
+                                <Text style={typography.body2}>
+                                    📊 Promedio diario: {alertStats.daily_average.toFixed(2)} alertas
+                                </Text>
+                                <Text style={typography.body2}>
+                                    📅 Últimos 30 días: {alertStats.last_30_days} alertas
+                                </Text>
+                                {alertStats.most_common_requisition && (
+                                    <Text style={typography.body2}>
+                                        🚨 Más común: {alertStats.most_common_requisition}
+                                    </Text>
+                                )}
+                            </View>
+                        </Card>
+                    )}
+
+                    {/* Información del Sistema */}
+                    <Card title="Información del Sistema">
+                        <Text style={typography.body2}>
+                            📱 Face Recognition Security v1.0.0
+                        </Text>
+                        <Text style={typography.body2}>
+                            🤖 Sistema ML implementado desde cero
+                        </Text>
+                        <Text style={typography.body2}>
+                            ⚡ Powered by React Native + Expo
+                        </Text>
+                        <Text style={typography.body2}>
+                            🔒 API: fr-ml-api-production.up.railway.app
+                        </Text>
+                        <Text style={typography.body2}>
+                            🌐 Entorno: Producción
+                        </Text>
+                        <Text style={typography.body2}>
+                            ✅ Estado: Sistema Operativo
+                        </Text>
+                    </Card>
 
                     {/* Acciones Rápidas */}
                     <Card title="Acciones Rápidas">
