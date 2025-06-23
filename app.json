@@ -16,8 +16,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Esta aplicación necesita acceso a la cámara para reconocimiento facial.",
-        "NSPhotoLibraryUsageDescription": "Esta aplicación necesita acceso a la galería para seleccionar fotos."
-      }
+        "NSPhotoLibraryUsageDescription": "Esta aplicación necesita acceso a la galería para seleccionar fotos.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "fr.ml.front.ios"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +30,8 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "package": "fr.ml.front"
     },
     "web": {
       "bundler": "metro"
@@ -41,6 +44,11 @@
         }
       ]
     ],
-    "jsEngine": "hermes"
+    "jsEngine": "hermes",
+    "extra": {
+      "eas": {
+        "projectId": "4b60fe5e-4b6f-49b7-b48d-856f5e759301"
+      }
+    }
   }
 }
