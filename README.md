@@ -277,12 +277,23 @@ eas update --branch production
 - Implementación de timeouts para evitar bloqueos
 - Gestión adecuada de memoria para imágenes
 
+## 👨‍💻 Autor
+
+<div align="center">
+
+### **Adrian Cisneros Bartra**
+*Software Developer*
+
+
+**"Desarrollando soluciones de IA que marcan la diferencia"**
+
+</div>
+
 ## Soporte y Documentación
 
 ### Recursos Adicionales
-- Documentación de la API: [Enlace a documentación API]
-- Guías de usuario: [Enlace a guías]
-- Reporte de bugs: [Sistema de tickets]
+- Documentación de la API: [https://github.com/Tunkifloo/FR-ML-API.git]
+- Enlace de descarga de la APP: [https://expo.dev/accounts/tunkifloo/projects/face-recognition-app/builds/60fb5b14-e0c0-48a8-833d-0e34008f64b3]
 
 ### Contacto
 Para soporte técnico y consultas sobre el desarrollo, contactar al equipo de desarrollo.
