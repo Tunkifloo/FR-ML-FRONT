@@ -120,27 +120,62 @@ export default function HomeScreen({ navigation }: HomeScreenProps): JSX.Element
                                 </TouchableOpacity>
                             )}
                         </View>
-
-                        {modelInfo && (
-                            <View style={globalStyles.marginTop16}>
-                                <Text style={typography.body2}>
-                                    👥 Personas en modelo: {modelInfo.eigenfaces_info.unique_persons}
-                                </Text>
-                                <Text style={typography.body2}>
-                                    📸 Imágenes procesadas: {modelInfo.eigenfaces_info.total_embeddings}
-                                </Text>
-                                <Text style={typography.body2}>
-                                    🧠 Algoritmos: Eigenfaces + LBP
-                                </Text>
-                                <Text style={typography.body2}>
-                                    📊 Versión: {modelInfo.system_info.model_version}
-                                </Text>
-                                <Text style={typography.body2}>
-                                    🎯 Confianza mínima: {modelInfo.system_info.confidence_threshold}%
-                                </Text>
-                            </View>
-                        )}
                     </Card>
+
+                        {/* Información del Modelo */}
+                        {modelInfo && (
+                            <Card title="Información del Modelo">
+                                <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
+                                    <Ionicons
+                                        name={modelInfo.system_info.is_trained ? "shield-checkmark" : "shield-outline"}
+                                        size={24}
+                                        color={modelInfo.system_info.is_trained ? colors.success : colors.textLight}
+                                    />
+                                    <Text style={[typography.body1, { marginLeft: 8 }]}>
+                                        {modelInfo.system_info.is_trained ? "Sistema Entrenado" : "Sistema Sin Entrenar"}
+                                    </Text>
+                                </View>
+
+                                {modelInfo.system_info.is_trained && (
+                                    <>
+                                        <Text style={typography.body2}>
+                                            🧠 Versión: {modelInfo.system_info.model_version}
+                                        </Text>
+                                        <Text style={typography.body2}>
+                                            🔀 Método: {modelInfo.system_info.combination_method}
+                                        </Text>
+                                        <Text style={typography.body2}>
+                                            🎯 Umbral de confianza: {modelInfo.system_info.confidence_threshold}%
+                                        </Text>
+                                        <Text style={typography.body2}>
+                                            📊 Sesiones de entrenamiento: {modelInfo.system_info.training_sessions}
+                                        </Text>
+
+                                        <View style={[globalStyles.marginTop16, {
+                                            backgroundColor: colors.background,
+                                            padding: 12,
+                                            borderRadius: 8
+                                        }]}>
+                                            <Text style={[typography.body2, {fontWeight: 'bold', marginBottom: 8}]}>
+                                                📈 Algoritmos Activos:
+                                            </Text>
+                                            <Text style={typography.body2}>
+                                                • Eigenfaces: {modelInfo.eigenfaces_info.n_components} componentes
+                                            </Text>
+                                            <Text style={typography.body2}>
+                                                • LBP: Radio {modelInfo.lbp_info.radius}, {modelInfo.lbp_info.n_points} puntos
+                                            </Text>
+                                            <Text style={typography.body2}>
+                                                • Embeddings: {modelInfo.eigenfaces_info.total_embeddings} totales
+                                            </Text>
+                                            <Text style={typography.body2}>
+                                                • Personas únicas: {modelInfo.eigenfaces_info.unique_persons}
+                                            </Text>
+                                        </View>
+                                    </>
+                                )}
+                            </Card>
+                        )}
 
                     {/* Estadísticas de Usuarios */}
                     {userStats && (
@@ -185,54 +220,64 @@ export default function HomeScreen({ navigation }: HomeScreenProps): JSX.Element
                         <Card title="Entrenamiento ML">
                             <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                                 <Ionicons
-                                    name={trainingStatus.model_trained ? "school" : "alert-circle"}
+                                    name={trainingStatus.model_trained ? "checkmark-circle" : "alert-circle"}
                                     size={24}
                                     color={trainingStatus.model_trained ? colors.success : colors.warning}
                                 />
-                                <Text style={[typography.body1, { marginLeft: 8 }]}>
-                                    {trainingStatus.model_trained ? 'Modelo Entrenado' : 'Entrenamiento Requerido'}
+                                <Text style={[typography.body1, { marginLeft: 8, flex: 1 }]}>
+                                    {trainingStatus.model_trained
+                                        ? "✅ Modelo Entrenado"
+                                        : "⚠️ Entrenamiento Requerido"}
                                 </Text>
                             </View>
 
-                            <Text style={typography.body2}>
-                                👥 {trainingStatus.training_requirements.users_with_images} usuarios con imágenes
-                            </Text>
-                            <Text style={typography.body2}>
-                                📷 {trainingStatus.training_requirements.total_images} imágenes de entrenamiento
-                            </Text>
-                            <Text style={typography.body2}>
-                                📊 Versión: {trainingStatus.model_version}
-                            </Text>
-                            <Text style={typography.body2}>
-                                🤖 Entrenamiento automático: {trainingStatus.auto_training_enabled ? 'Activado' : 'Desactivado'}
-                            </Text>
-                            <Text style={typography.body2}>
-                                📋 Mínimo requerido: {trainingStatus.training_requirements.min_required} usuarios
-                            </Text>
-
-                            {/* Recomendación del sistema */}
-                            <View style={[
-                                globalStyles.statusBadge,
-                                trainingStatus.system_ready ? globalStyles.successBadge : globalStyles.warningBadge,
-                                globalStyles.marginTop8
-                            ]}>
-                                <Text style={globalStyles.badgeText}>
-                                    {trainingStatus.recommendation}
+                            <View style={globalStyles.marginTop8}>
+                                <Text style={typography.body2}>
+                                    👥 Usuarios con imágenes: {trainingStatus.training_requirements.users_with_images}
+                                </Text>
+                                <Text style={typography.body2}>
+                                    📸 Total de imágenes: {trainingStatus.training_requirements.total_images}
+                                </Text>
+                                <Text style={typography.body2}>
+                                    📋 Mínimo requerido: {trainingStatus.training_requirements.min_required} usuarios
+                                </Text>
+                                <Text style={typography.body2}>
+                                    🔄 Entrenamiento automático: {trainingStatus.auto_training_enabled ? "Activado" : "Desactivado"}
+                                </Text>
+                                <Text style={typography.body2}>
+                                    📌 Versión del modelo: {trainingStatus.model_version}
                                 </Text>
                             </View>
 
-                            {/* Estado de correcciones */}
-                            <Text style={[typography.caption, globalStyles.marginTop8]}>
-                                {trainingStatus.fixes_status}
-                            </Text>
+                            {trainingStatus.training_requirements.can_train && !trainingStatus.model_trained && (
+                                <View style={[globalStyles.marginTop16, {
+                                    backgroundColor: colors.info + '20',
+                                    padding: 12,
+                                    borderRadius: 8,
+                                    borderLeftWidth: 4,
+                                    borderLeftColor: colors.info
+                                }]}>
+                                    <Text style={[typography.body2, {color: colors.info, fontWeight: 'bold'}]}>
+                                        💡 {trainingStatus.recommendation}
+                                    </Text>
+                                </View>
+                            )}
 
-                            {!trainingStatus.model_trained && trainingStatus.training_requirements.can_train && (
-                                <TouchableOpacity
-                                    style={[globalStyles.primaryButton, globalStyles.marginTop16]}
-                                    onPress={handleTrainModel}
-                                >
-                                    <Text style={globalStyles.buttonText}>Entrenar Modelo Ahora</Text>
-                                </TouchableOpacity>
+                            {!trainingStatus.training_requirements.can_train && (
+                                <View style={[globalStyles.marginTop16, {
+                                    backgroundColor: colors.warning + '20',
+                                    padding: 12,
+                                    borderRadius: 8,
+                                    borderLeftWidth: 4,
+                                    borderLeftColor: colors.warning
+                                }]}>
+                                    <Text style={[typography.body2, {color: colors.warning}]}>
+                                        ⚠️ Usuarios pendientes: {trainingStatus.training_requirements.pending_users}
+                                    </Text>
+                                    <Text style={[typography.caption, {marginTop: 4, color: colors.textLight}]}>
+                                        Se necesitan al menos {trainingStatus.training_requirements.min_required} usuarios con imágenes para entrenar el modelo
+                                    </Text>
+                                </View>
                             )}
                         </Card>
                     )}
@@ -286,16 +331,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps): JSX.Element
                     {/* Información del Sistema */}
                     <Card title="Información del Sistema">
                         <Text style={typography.body2}>
-                            📱 Face Recognition Security v1.0.0
+                            📱 Face Recognition Security v2.0
                         </Text>
                         <Text style={typography.body2}>
                             🤖 Sistema ML implementado desde cero
                         </Text>
                         <Text style={typography.body2}>
                             ⚡ Powered by React Native + Expo
-                        </Text>
-                        <Text style={typography.body2}>
-                            🔒 API: fr-ml-api-production.up.railway.app
                         </Text>
                         <Text style={typography.body2}>
                             🌐 Entorno: Producción

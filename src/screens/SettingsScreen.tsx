@@ -76,7 +76,7 @@ export default function SettingsScreen(): JSX.Element {
             <ScrollView style={globalStyles.content}>
                 {loading && <Loading message="Procesando..." />}
 
-                {/* Estado del Sistema - DATOS ACTUALIZADOS */}
+                {/* Estado del Sistema */}
                 <Card title="Estado del Sistema">
                     <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                         <Ionicons

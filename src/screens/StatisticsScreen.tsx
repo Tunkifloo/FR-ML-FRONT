@@ -250,31 +250,61 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                             </Card>
 
                             {/* Matriz de Confusión Visual */}
-                            {confusionMatrix && confusionMatrix.image_base64 && (
+                            {confusionMatrix && confusionMatrix.data && (
                                 <Card title="🎯 Matriz de Confusión">
-                                    <Text style={[typography.body2, {marginBottom: 12}]}>
-                                        {confusionMatrix.message}
+                                    <Text style={[typography.body2, {marginBottom: 12, color: colors.textLight}]}>
+                                        {confusionMatrix.message || 'Visualización de predicciones vs realidad'}
                                     </Text>
-                                    <Image
-                                        source={{ uri: `data:image/png;base64,${confusionMatrix.image_base64}` }}
-                                        style={{
-                                            width: screenWidth - 64,
-                                            height: screenWidth - 64,
-                                            resizeMode: 'contain',
-                                            borderRadius: 8,
-                                        }}
-                                    />
-                                    <View style={[globalStyles.marginTop16, {backgroundColor: colors.background, padding: 12, borderRadius: 8}]}>
-                                        <Text style={typography.body2}>
-                                            ✅ Predicciones correctas: {confusionMatrix.stats.correct_predictions} de {confusionMatrix.stats.total_predictions}
-                                        </Text>
-                                        <Text style={typography.body2}>
-                                            📊 Precisión: {(confusionMatrix.stats.accuracy * 100).toFixed(1)}%
-                                        </Text>
-                                        <Text style={typography.body2}>
-                                            👥 Usuarios analizados: {confusionMatrix.stats.users_analyzed}
-                                        </Text>
-                                    </View>
+
+                                    {confusionMatrix.data.image_base64 ? (
+                                        <>
+                                            <Image
+                                                source={{
+                                                    uri: confusionMatrix.data.image_base64.startsWith('data:image')
+                                                        ? confusionMatrix.data.image_base64
+                                                        : `data:image/png;base64,${confusionMatrix.data.image_base64}`
+                                                }}
+                                                style={{
+                                                    width: screenWidth - 64,
+                                                    height: screenWidth - 64,
+                                                    resizeMode: 'contain',
+                                                    borderRadius: 8,
+                                                    backgroundColor: colors.background,
+                                                }}
+                                                onError={(error) => {
+                                                    console.error('Error cargando matriz de confusión:', error.nativeEvent.error);
+                                                }}
+                                                onLoad={() => {
+                                                    console.log('✅ Matriz de confusión cargada exitosamente');
+                                                }}
+                                            />
+
+                                            {confusionMatrix.data.stats && (
+                                                <View style={[globalStyles.marginTop16, {
+                                                    backgroundColor: colors.background,
+                                                    padding: 12,
+                                                    borderRadius: 8
+                                                }]}>
+                                                    <Text style={typography.body2}>
+                                                        ✅ Correctas: {confusionMatrix.data.stats.correct_predictions || 0} / {confusionMatrix.data.stats.total_predictions || 0}
+                                                    </Text>
+                                                    <Text style={typography.body2}>
+                                                        📊 Precisión: {((confusionMatrix.data.stats.accuracy || 0) * 100).toFixed(1)}%
+                                                    </Text>
+                                                    <Text style={typography.body2}>
+                                                        👥 Usuarios: {confusionMatrix.data.stats.users_analyzed || 0}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <View style={[globalStyles.center, {padding: 20}]}>
+                                            <Ionicons name="alert-circle-outline" size={48} color={colors.textLight} />
+                                            <Text style={[typography.body2, {marginTop: 8, textAlign: 'center', color: colors.textLight}]}>
+                                                No hay suficientes datos para generar la matriz de confusión
+                                            </Text>
+                                        </View>
+                                    )}
                                 </Card>
                             )}
 
@@ -338,17 +368,18 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                 <Card title="📅 Reconocimientos por Día">
                                     <LineChart
                                         data={{
-                                            labels: completeStats.visualizaciones.series_temporales.labels.map(d =>
-                                                new Date(d).getDate().toString()
-                                            ),
+                                            labels: completeStats.visualizaciones.series_temporales.labels.map(d => {
+                                                const date = new Date(d);
+                                                return date.getDate().toString();
+                                            }),
                                             datasets: [
                                                 {
-                                                    data: completeStats.visualizaciones.series_temporales.datasets.total,
+                                                    data: completeStats.visualizaciones.series_temporales.datasets.total.map(v => Number(v) || 0),
                                                     color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
                                                     strokeWidth: 2
                                                 },
                                                 {
-                                                    data: completeStats.visualizaciones.series_temporales.datasets.exitosos.map(Number),
+                                                    data: completeStats.visualizaciones.series_temporales.datasets.exitosos.map(v => Number(v) || 0),
                                                     color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
                                                     strokeWidth: 2
                                                 }
@@ -357,12 +388,23 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                         }}
                                         width={screenWidth - 64}
                                         height={220}
-                                        chartConfig={chartConfig}
+                                        chartConfig={{
+                                            ...chartConfig,
+                                            propsForDots: {
+                                                r: "4",
+                                                strokeWidth: "2",
+                                            }
+                                        }}
                                         bezier
                                         style={{
                                             marginVertical: 8,
                                             borderRadius: 16,
                                         }}
+                                        withInnerLines={true}
+                                        withOuterLines={true}
+                                        withVerticalLabels={true}
+                                        withHorizontalLabels={true}
+                                        fromZero={true}
                                     />
                                 </Card>
                             )}

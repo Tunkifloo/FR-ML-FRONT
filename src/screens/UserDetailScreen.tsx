@@ -289,13 +289,13 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                     </Card>
 
                     {/* Imágenes */}
-                    <Card title={`Imágenes (${user.total_imagenes}/5)`}>
+                    <Card title={`Imágenes (${user.total_imagenes}/15)`}>
                         <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                             <Text style={typography.body2}>
                                 {user.total_imagenes} imagen{user.total_imagenes !== 1 ? 'es' : ''} registrada{user.total_imagenes !== 1 ? 's' : ''}
                             </Text>
 
-                            {user.total_imagenes < 5 && (
+                            {user.total_imagenes < 15 && (
                                 <TouchableOpacity
                                     style={globalStyles.primaryButton}
                                     onPress={handleAddImages}

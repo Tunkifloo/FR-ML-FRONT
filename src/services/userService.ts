@@ -278,7 +278,7 @@ export class UserService {
         }
     }
 
-    // Obtener estado del entrenamiento - ENDPOINT ACTUALIZADO
+    // Obtener estado del entrenamiento
     static async getTrainingStatus(): Promise<ResponseWithData<TrainingStatus>> {
         try {
             const response = await apiService.axiosInstance.get('/usuarios/entrenamiento/estado');
