@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const BASE_URL = 'https://fr-ml-api-production.up.railway.app/api/v1';
+const BASE_URL = 'https://40170602298f.ngrok-free.app/api/v1';
 
 class ApiService {
     private api: AxiosInstance;

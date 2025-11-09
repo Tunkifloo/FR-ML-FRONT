@@ -1,13 +1,13 @@
-import React, {useState, useEffect, JSX} from 'react';
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, JSX } from 'react';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PieChart } from 'react-native-chart-kit';
+import { PieChart, BarChart, LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../components/common/Card';
 import { Loading } from '../components/common/Loading';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { RecognitionService } from '../services/recognitionService';
-import { AlertStats } from '../types';
+import { AlertStats, EstadisticasCompletas, MatrizConfusionVisual } from '../types';
 import { globalStyles } from '../theme/styles';
 import { typography } from '../theme/typography';
 import { colors } from '../theme/colors';
@@ -21,20 +21,44 @@ interface StatisticsScreenProps {
 const screenWidth = Dimensions.get('window').width;
 
 export default function StatisticsScreen({ navigation }: StatisticsScreenProps): JSX.Element {
+    // Estados existentes
     const [alertStats, setAlertStats] = useState<AlertStats | null>(null);
+
+    // Estados nuevos
+    const [completeStats, setCompleteStats] = useState<EstadisticasCompletas | null>(null);
+    const [confusionMatrix, setConfusionMatrix] = useState<MatrizConfusionVisual | null>(null);
+
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedDays, setSelectedDays] = useState(30);
 
-    const loadAlertStatistics = async () => {
+    const loadAllStatistics = async () => {
         try {
             setError(null);
-            const response = await RecognitionService.getAlertsStatistics();
-            setAlertStats(response.data);
+
+            // Cargar en paralelo
+            const [alertsResponse, completeResponse] = await Promise.all([
+                RecognitionService.getAlertsStatistics(),
+                RecognitionService.getCompleteStatistics(selectedDays)
+            ]);
+
+            setAlertStats(alertsResponse.data);
+            setCompleteStats(completeResponse.data);
+
+            // Cargar matriz de confusión si hay datos
+            if (completeResponse.data.resumen.reconocimientos_exitosos > 0) {
+                try {
+                    const matrixResponse = await RecognitionService.getConfusionMatrixVisual(selectedDays);
+                    setConfusionMatrix(matrixResponse.data);
+                } catch (matrixError) {
+                    console.log('Matriz de confusión no disponible:', matrixError);
+                }
+            }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.detail || err.message || 'Error al cargar estadísticas de alertas';
+            const errorMessage = err.response?.data?.detail || err.message || 'Error al cargar estadísticas';
             setError(errorMessage);
-            console.error('Error loading alert statistics:', err);
+            console.error('Error loading statistics:', err);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -42,12 +66,12 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
     };
 
     useEffect(() => {
-        loadAlertStatistics();
-    }, []);
+        loadAllStatistics();
+    }, [selectedDays]);
 
     const onRefresh = () => {
         setRefreshing(true);
-        loadAlertStatistics();
+        loadAllStatistics();
     };
 
     const chartConfig = {
@@ -62,7 +86,22 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
         },
     };
 
-    // Preparar datos para gráfico de alertas por nivel
+    // Preparar datos para gráfico de distribución de confianza
+    const getConfidenceDistribution = () => {
+        if (!completeStats || !completeStats.visualizaciones.distribucion_confianza) return [];
+
+        return Object.entries(completeStats.visualizaciones.distribucion_confianza)
+            .filter(([_, data]) => data.count > 0)
+            .map(([range, data]) => ({
+                name: range,
+                population: data.count,
+                color: data.color,
+                legendFontColor: colors.text,
+                legendFontSize: 11,
+            }));
+    };
+
+    // Preparar datos para alertas (existente)
     const getAlertLevelDistribution = () => {
         if (!alertStats || !alertStats.by_level) return [];
 
@@ -83,24 +122,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
             }));
     };
 
-    // Preparar datos para gráfico de tipos de requisitoria
-    const getRequisitionTypeDistribution = () => {
-        if (!alertStats || !alertStats.by_requisition_type) return [];
-
-        const typeColors = [colors.secondary, colors.warning, colors.info, colors.primary];
-
-        return Object.entries(alertStats.by_requisition_type)
-            .filter(([_, count]) => count > 0)
-            .map(([type, count], index) => ({
-                name: type,
-                population: count,
-                color: typeColors[index % typeColors.length],
-                legendFontColor: colors.text,
-                legendFontSize: 11,
-            }));
-    };
-
-    if (loading && !alertStats) {
+    if (loading && !completeStats) {
         return <Loading message="Cargando estadísticas..." />;
     }
 
@@ -114,40 +136,243 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                     }
                 >
                     {error && (
-                        <ErrorMessage message={error} onRetry={loadAlertStatistics} />
+                        <ErrorMessage message={error} onRetry={loadAllStatistics} />
                     )}
 
-                    {/* MENSAJE: Estadísticas Generales en Desarrollo */}
-                    <Card>
-                        <View style={[globalStyles.row, globalStyles.alignCenter, globalStyles.marginBottom16]}>
-                            <Ionicons name="construct" size={24} color={colors.warning} />
-                            <Text style={[typography.h3, { marginLeft: 8 }]}>Estadísticas Generales</Text>
-                        </View>
-
-                        <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
-                            <Ionicons name="build" size={48} color={colors.textLight} />
-                            <Text style={[typography.h4, globalStyles.marginTop16]}>
-                                🚧 Herramienta en Desarrollo
-                            </Text>
-                            <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
-                                Las estadísticas completas de reconocimiento están siendo desarrolladas.
-                                Por ahora puedes ver las estadísticas de alertas de seguridad.
-                            </Text>
-                            <Text style={[typography.caption, globalStyles.marginTop8, { textAlign: 'center', fontStyle: 'italic' }]}>
-                                Endpoint /reconocimiento/estadisticas no está operativo
-                            </Text>
+                    {/* Selector de Período */}
+                    <Card title="📅 Período de Análisis">
+                        <View style={[globalStyles.row, globalStyles.spaceBetween, {flexWrap: 'wrap'}]}>
+                            {[7, 15, 30, 90].map((days) => (
+                                <TouchableOpacity
+                                    key={days}
+                                    style={[
+                                        {
+                                            paddingVertical: 8,
+                                            paddingHorizontal: 16,
+                                            borderRadius: 8,
+                                            borderWidth: 1,
+                                            borderColor: selectedDays === days ? colors.primary : colors.border,
+                                            backgroundColor: selectedDays === days ? colors.primary : 'transparent',
+                                            marginBottom: 8,
+                                        }
+                                    ]}
+                                    onPress={() => setSelectedDays(days)}
+                                >
+                                    <Text style={[
+                                        typography.body2,
+                                        { color: selectedDays === days ? colors.surface : colors.text }
+                                    ]}>
+                                        {days} días
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
                     </Card>
 
-                    {/* Estadísticas de Alertas - SOLO ESTAS ESTÁN OPERATIVAS */}
+                    {/* Estadísticas Generales de Reconocimiento */}
+                    {completeStats && (
+                        <>
+                            <Card title="📊 Resumen de Reconocimientos">
+                                <View style={[globalStyles.row, globalStyles.spaceBetween]}>
+                                    <View style={globalStyles.alignCenter}>
+                                        <Text style={[typography.h2, { color: colors.primary }]}>
+                                            {completeStats.resumen.total_reconocimientos}
+                                        </Text>
+                                        <Text style={typography.caption}>Total</Text>
+                                    </View>
+                                    <View style={globalStyles.alignCenter}>
+                                        <Text style={[typography.h2, { color: colors.success }]}>
+                                            {completeStats.resumen.reconocimientos_exitosos}
+                                        </Text>
+                                        <Text style={typography.caption}>Exitosos</Text>
+                                    </View>
+                                    <View style={globalStyles.alignCenter}>
+                                        <Text style={[typography.h2, { color: colors.warning }]}>
+                                            {completeStats.resumen.tasa_exito.toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>Tasa Éxito</Text>
+                                    </View>
+                                    <View style={globalStyles.alignCenter}>
+                                        <Text style={[typography.h2, { color: colors.info }]}>
+                                            {completeStats.resumen.confianza_promedio_exitosos.toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>Confianza</Text>
+                                    </View>
+                                </View>
+
+                                <View style={globalStyles.marginTop16}>
+                                    <Text style={typography.body2}>
+                                        📈 Promedio diario: {completeStats.resumen.promedio_diario.toFixed(1)} reconocimientos
+                                    </Text>
+                                    <Text style={typography.body2}>
+                                        🚨 Alertas generadas: {completeStats.resumen.alertas_generadas}
+                                    </Text>
+                                </View>
+                            </Card>
+
+                            {/* Métricas de Machine Learning */}
+                            <Card title="🤖 Métricas de Machine Learning">
+                                <View style={[globalStyles.row, globalStyles.spaceBetween, {flexWrap: 'wrap'}]}>
+                                    <View style={[globalStyles.alignCenter, {width: '45%', marginBottom: 16}]}>
+                                        <Text style={[typography.h2, { color: colors.primary }]}>
+                                            {(completeStats.metricas_ml.precision * 100).toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>Precisión</Text>
+                                    </View>
+                                    <View style={[globalStyles.alignCenter, {width: '45%', marginBottom: 16}]}>
+                                        <Text style={[typography.h2, { color: colors.success }]}>
+                                            {(completeStats.metricas_ml.recall * 100).toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>Recall</Text>
+                                    </View>
+                                    <View style={[globalStyles.alignCenter, {width: '45%'}]}>
+                                        <Text style={[typography.h2, { color: colors.info }]}>
+                                            {(completeStats.metricas_ml.f1_score * 100).toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>F1-Score</Text>
+                                    </View>
+                                    <View style={[globalStyles.alignCenter, {width: '45%'}]}>
+                                        <Text style={[typography.h2, { color: colors.warning }]}>
+                                            {(completeStats.metricas_ml.accuracy * 100).toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.caption}>Accuracy</Text>
+                                    </View>
+                                </View>
+
+                                <View style={[globalStyles.marginTop16, {backgroundColor: colors.background, padding: 12, borderRadius: 8}]}>
+                                    <Text style={typography.body2}>
+                                        📊 Muestras analizadas: {completeStats.metricas_ml.total_samples}
+                                    </Text>
+                                    <Text style={typography.body2}>
+                                        👥 Clases distintas: {completeStats.metricas_ml.num_classes}
+                                    </Text>
+                                </View>
+                            </Card>
+
+                            {/* Matriz de Confusión Visual */}
+                            {confusionMatrix && confusionMatrix.image_base64 && (
+                                <Card title="🎯 Matriz de Confusión">
+                                    <Text style={[typography.body2, {marginBottom: 12}]}>
+                                        {confusionMatrix.message}
+                                    </Text>
+                                    <Image
+                                        source={{ uri: `data:image/png;base64,${confusionMatrix.image_base64}` }}
+                                        style={{
+                                            width: screenWidth - 64,
+                                            height: screenWidth - 64,
+                                            resizeMode: 'contain',
+                                            borderRadius: 8,
+                                        }}
+                                    />
+                                    <View style={[globalStyles.marginTop16, {backgroundColor: colors.background, padding: 12, borderRadius: 8}]}>
+                                        <Text style={typography.body2}>
+                                            ✅ Predicciones correctas: {confusionMatrix.stats.correct_predictions} de {confusionMatrix.stats.total_predictions}
+                                        </Text>
+                                        <Text style={typography.body2}>
+                                            📊 Precisión: {(confusionMatrix.stats.accuracy * 100).toFixed(1)}%
+                                        </Text>
+                                        <Text style={typography.body2}>
+                                            👥 Usuarios analizados: {confusionMatrix.stats.users_analyzed}
+                                        </Text>
+                                    </View>
+                                </Card>
+                            )}
+
+                            {/* Distribución de Confianza */}
+                            {getConfidenceDistribution().length > 0 && (
+                                <Card title="📈 Distribución de Confianza">
+                                    <PieChart
+                                        data={getConfidenceDistribution()}
+                                        width={screenWidth - 64}
+                                        height={220}
+                                        chartConfig={chartConfig}
+                                        accessor="population"
+                                        backgroundColor="transparent"
+                                        paddingLeft="15"
+                                        center={[10, 0]}
+                                        style={{
+                                            marginVertical: 8,
+                                            borderRadius: 16,
+                                        }}
+                                    />
+                                </Card>
+                            )}
+
+                            {/* Top Usuarios Reconocidos */}
+                            {completeStats.visualizaciones.top_usuarios.labels.length > 0 && (
+                                <Card title="🏆 Top Usuarios Reconocidos">
+                                    <BarChart
+                                        data={{
+                                            labels: completeStats.visualizaciones.top_usuarios.labels.map(l => l.split(' ')[0]),
+                                            datasets: [{
+                                                data: completeStats.visualizaciones.top_usuarios.data
+                                            }]
+                                        }}
+                                        width={screenWidth - 64}
+                                        height={220}
+                                        yAxisLabel=""
+                                        yAxisSuffix=""
+                                        chartConfig={{
+                                            ...chartConfig,
+                                            barPercentage: 0.7,
+                                        }}
+                                        style={{
+                                            marginVertical: 8,
+                                            borderRadius: 16,
+                                        }}
+                                        showValuesOnTopOfBars
+                                    />
+                                    <View style={globalStyles.marginTop8}>
+                                        {completeStats.visualizaciones.top_usuarios.labels.map((label, idx) => (
+                                            <Text key={idx} style={typography.caption}>
+                                                {label}: {completeStats.visualizaciones.top_usuarios.data[idx]} reconocimientos
+                                                (Conf: {completeStats.visualizaciones.top_usuarios.confidence[idx].toFixed(1)}%)
+                                            </Text>
+                                        ))}
+                                    </View>
+                                </Card>
+                            )}
+
+                            {/* Series Temporales */}
+                            {completeStats.visualizaciones.series_temporales.labels.length > 0 && (
+                                <Card title="📅 Reconocimientos por Día">
+                                    <LineChart
+                                        data={{
+                                            labels: completeStats.visualizaciones.series_temporales.labels.map(d =>
+                                                new Date(d).getDate().toString()
+                                            ),
+                                            datasets: [
+                                                {
+                                                    data: completeStats.visualizaciones.series_temporales.datasets.total,
+                                                    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+                                                    strokeWidth: 2
+                                                },
+                                                {
+                                                    data: completeStats.visualizaciones.series_temporales.datasets.exitosos.map(Number),
+                                                    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+                                                    strokeWidth: 2
+                                                }
+                                            ],
+                                            legend: ["Total", "Exitosos"]
+                                        }}
+                                        width={screenWidth - 64}
+                                        height={220}
+                                        chartConfig={chartConfig}
+                                        bezier
+                                        style={{
+                                            marginVertical: 8,
+                                            borderRadius: 16,
+                                        }}
+                                    />
+                                </Card>
+                            )}
+                        </>
+                    )}
+
+                    {/* Estadísticas de Alertas - MANTENER LO EXISTENTE */}
                     {alertStats && (
                         <>
-                            {/* Resumen de Alertas */}
-                            <Card title="📊 Estadísticas de Alertas de Seguridad">
-                                <Text style={[typography.caption, { color: colors.success, marginBottom: 16, fontWeight: 'bold' }]}>
-                                    ✅ Endpoint operativo: /reconocimiento/alertas/estadisticas
-                                </Text>
-
+                            <Card title="🚨 Estadísticas de Alertas de Seguridad">
                                 <View style={[globalStyles.row, globalStyles.spaceBetween]}>
                                     <View style={globalStyles.alignCenter}>
                                         <Text style={[typography.h2, { color: colors.secondary }]}>
@@ -209,73 +434,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                     />
                                 </Card>
                             )}
-
-                            {/* Distribución por Tipo de Requisitoria */}
-                            {getRequisitionTypeDistribution().length > 0 && (
-                                <Card title="Distribución por Tipo de Requisitoria">
-                                    <PieChart
-                                        data={getRequisitionTypeDistribution()}
-                                        width={screenWidth - 64}
-                                        height={220}
-                                        chartConfig={chartConfig}
-                                        accessor="population"
-                                        backgroundColor="transparent"
-                                        paddingLeft="15"
-                                        center={[10, 0]}
-                                        style={{
-                                            marginVertical: 8,
-                                            borderRadius: 16,
-                                        }}
-                                    />
-                                </Card>
-                            )}
-
-                            {/* Desglose Detallado por Tipo */}
-                            <Card title="Desglose Detallado por Tipo de Requisitoria">
-                                {Object.entries(alertStats.by_requisition_type).map(([type, count], index) => (
-                                    <View
-                                        key={type}
-                                        style={[
-                                            globalStyles.row,
-                                            globalStyles.spaceBetween,
-                                            globalStyles.alignCenter,
-                                            globalStyles.paddingVertical8,
-                                            index > 0 && { borderTopWidth: 1, borderTopColor: colors.border }
-                                        ]}
-                                    >
-                                        <View style={[globalStyles.row, globalStyles.alignCenter]}>
-                                            <Ionicons name="warning" size={20} color={colors.secondary} />
-                                            <Text style={[typography.body1, { marginLeft: 8 }]}>
-                                                {type}
-                                            </Text>
-                                        </View>
-                                        <View style={globalStyles.alignCenter}>
-                                            <Text style={[typography.h3, { color: colors.secondary }]}>
-                                                {count}
-                                            </Text>
-                                            <Text style={typography.caption}>
-                                                {alertStats.total_alerts > 0 ? ((count / alertStats.total_alerts) * 100).toFixed(1) : '0.0'}%
-                                            </Text>
-                                        </View>
-                                    </View>
-                                ))}
-                            </Card>
                         </>
-                    )}
-
-                    {/* Mensaje cuando no hay alertas */}
-                    {alertStats && alertStats.total_alerts === 0 && (
-                        <Card>
-                            <View style={[globalStyles.center, globalStyles.paddingVertical16]}>
-                                <Ionicons name="shield-checkmark" size={48} color={colors.success} />
-                                <Text style={[typography.h4, globalStyles.marginTop16]}>
-                                    Sin Alertas de Seguridad
-                                </Text>
-                                <Text style={[typography.body2, globalStyles.marginTop8, { textAlign: 'center' }]}>
-                                    No se han generado alertas de seguridad. El sistema está funcionando normalmente.
-                                </Text>
-                            </View>
-                        </Card>
                     )}
 
                     {/* Botón para ver Historial de Alertas */}
@@ -290,27 +449,6 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                             </Text>
                         </View>
                     </TouchableOpacity>
-
-                    {/* Información sobre Estadísticas Completas */}
-                    <Card title="🔮 Próximamente - Estadísticas Completas">
-                        <View style={[globalStyles.row, globalStyles.alignCenter]}>
-                            <Ionicons name="time" size={20} color={colors.info} />
-                            <Text style={[typography.body2, { marginLeft: 8, flex: 1 }]}>
-                                Las estadísticas completas de reconocimiento, gráficos de tendencias y métricas de precisión estarán disponibles cuando el endpoint /reconocimiento/estadisticas esté operativo.
-                            </Text>
-                        </View>
-
-                        <View style={[globalStyles.marginTop16, { backgroundColor: colors.background, padding: 12, borderRadius: 8 }]}>
-                            <Text style={[typography.caption, { fontWeight: 'bold', marginBottom: 8 }]}>
-                                📋 Estadísticas Planificadas:
-                            </Text>
-                            <Text style={typography.caption}>• Historial de reconocimientos por día/semana</Text>
-                            <Text style={typography.caption}>• Tasa de éxito y confianza promedio</Text>
-                            <Text style={typography.caption}>• Top usuarios más reconocidos</Text>
-                            <Text style={typography.caption}>• Distribución de confianza</Text>
-                            <Text style={typography.caption}>• Métricas de rendimiento del sistema</Text>
-                        </View>
-                    </Card>
                 </ScrollView>
             </View>
         </SafeAreaView>

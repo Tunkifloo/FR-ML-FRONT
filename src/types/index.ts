@@ -2,6 +2,7 @@
 export * from './api';
 export * from './user';
 export * from './recognition';
+export * from './statistics';
 
 // Tipos adicionales para el sistema
 export interface EstadisticasUsuarios {

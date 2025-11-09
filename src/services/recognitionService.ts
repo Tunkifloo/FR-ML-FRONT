@@ -8,6 +8,7 @@ import {
     RecognitionHistoryData,
     AlertsData
 } from '../types';
+import {EstadisticasCompletas, MatrizConfusionVisual} from "@/types/statistics";
 
 export class RecognitionService {
     // Identificar persona en imagen
@@ -36,7 +37,7 @@ export class RecognitionService {
         }
     }
 
-    // Obtener historial de reconocimientos - ACTUALIZADO SEGÚN ENDPOINT REAL
+    // Obtener historial de reconocimientos
     static async getRecognitionHistory(
         pagina: number = 1,
         itemsPorPagina: number = 20,
@@ -69,7 +70,7 @@ export class RecognitionService {
         }
     }
 
-    // Obtener estadísticas de reconocimientos - MARCADO COMO NO OPERATIVO
+    // Obtener estadísticas de reconocimientos
     static async getRecognitionStatistics(dias: number = 30): Promise<ResponseWithData<any>> {
         try {
             // NOTA: Este endpoint no está operativo según las especificaciones
@@ -98,7 +99,7 @@ export class RecognitionService {
         }
     }
 
-    // Obtener historial de alertas - ACTUALIZADO SEGÚN ENDPOINT REAL
+    // Obtener historial de alertas
     static async getAlertsHistory(
         limite: number = 50,
         nivel?: 'HIGH' | 'MEDIUM' | 'LOW'
@@ -119,7 +120,7 @@ export class RecognitionService {
         }
     }
 
-    // Obtener estadísticas de alertas - OPERATIVO
+    // Obtener estadísticas de alertas
     static async getAlertsStatistics(): Promise<ResponseWithData<AlertStats>> {
         try {
             const response = await apiService.axiosInstance.get('/reconocimiento/alertas/estadisticas');
@@ -127,6 +128,42 @@ export class RecognitionService {
         } catch (error) {
             console.error('Error in getAlertsStatistics:', error);
             throw new Error(handleApiError(error, 'Error al obtener estadísticas de alertas'));
+        }
+    }
+
+    /**
+     * Obtener estadísticas completas del sistema
+     */
+    static async getCompleteStatistics(dias: number = 30): Promise<ResponseWithData<EstadisticasCompletas>> {
+        try {
+            const params = new URLSearchParams();
+            params.append('dias', dias.toString());
+
+            const response = await apiService.axiosInstance.get(
+                `/reconocimiento/estadisticas-completas?${params.toString()}`
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error in getCompleteStatistics:', error);
+            throw new Error(handleApiError(error, 'Error al obtener estadísticas completas'));
+        }
+    }
+
+    /**
+     * Obtener matriz de confusión visual
+     */
+    static async getConfusionMatrixVisual(dias: number = 30): Promise<ResponseWithData<MatrizConfusionVisual>> {
+        try {
+            const params = new URLSearchParams();
+            params.append('dias', dias.toString());
+
+            const response = await apiService.axiosInstance.get(
+                `/reconocimiento/matriz-confusion-visual?${params.toString()}`
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error in getConfusionMatrixVisual:', error);
+            throw new Error(handleApiError(error, 'Error al obtener matriz de confusión'));
         }
     }
 
