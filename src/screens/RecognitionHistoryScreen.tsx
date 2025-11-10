@@ -174,9 +174,20 @@ export default function RecognitionHistoryScreen(): JSX.Element {
 
     const renderHeader = () => (
         <Card>
-            <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter]}>
-                <View>
-                    <Text style={typography.h3}>Historial de Reconocimientos</Text>
+            <View style={[globalStyles.row, globalStyles.alignCenter]}>
+                <View style={{ flex: 1 }}>
+                    {/* fila con título + icono */}
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <Text style={typography.h3}>Historial de Reconocimientos</Text>
+                        <Ionicons
+                            name="time"
+                            size={28}
+                            color={colors.primary}
+                            style={{ marginLeft: 8 }}
+                        />
+                    </View>
+
+                    {/* subtítulo y caption debajo */}
                     <Text style={typography.body2}>
                         {historyData?.paginacion.total || 0} reconocimientos registrados
                     </Text>
@@ -186,8 +197,8 @@ export default function RecognitionHistoryScreen(): JSX.Element {
                         </Text>
                     )}
                 </View>
-                <Ionicons name="time" size={32} color={colors.primary} />
             </View>
+
 
             {/* Estadísticas rápidas de la página actual */}
             {historyData && historyData.reconocimientos.length > 0 && (

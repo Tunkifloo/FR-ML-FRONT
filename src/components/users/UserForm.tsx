@@ -13,7 +13,7 @@ import { typography } from '../../theme/typography';
 // Constantes y funciones helper
 const USER_LIMITS = {
     MIN_IMAGES: 1,
-    MAX_IMAGES: 5,
+    MAX_IMAGES: 15,
     NAME_MIN_LENGTH: 2,
     NAME_MAX_LENGTH: 50,
     EMAIL_MAX_LENGTH: 100,

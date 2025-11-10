@@ -80,7 +80,7 @@ export class UserService {
         }
     }
 
-    // CORREGIDO: Obtener usuario por ID numérico (PK) - ENDPOINT OPERATIVO
+    // Obtener usuario por ID numérico (PK)
     static async getUserById(
         usuarioId: number,
         incluirImagenes: boolean = true,

@@ -60,8 +60,8 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
             if (!user) return;
 
             // Verificar límite de imágenes
-            if (user.total_imagenes >= 5) {
-                Alert.alert('Límite alcanzado', 'Un usuario puede tener máximo 5 imágenes');
+            if (user.total_imagenes >= 15) {
+                Alert.alert('Límite alcanzado', 'Un usuario puede tener máximo 15 imágenes');
                 return;
             }
 
@@ -107,7 +107,7 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                 aspect: [1, 1],
                 quality: 0.8,
                 allowsMultipleSelection: true,
-                selectionLimit: 5 - (user?.total_imagenes || 0),
+                selectionLimit: 15 - (user?.total_imagenes || 0),
             });
 
             if (!result.canceled && result.assets.length > 0) {
@@ -289,10 +289,10 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                     </Card>
 
                     {/* Imágenes */}
-                    <Card title={`Imágenes (${user.total_imagenes}/15)`}>
+                    <Card title={`Imágenes (${user.total_imagenes || 0}/15)`}>
                         <View style={[globalStyles.row, globalStyles.spaceBetween, globalStyles.alignCenter, globalStyles.marginBottom16]}>
                             <Text style={typography.body2}>
-                                {user.total_imagenes} imagen{user.total_imagenes !== 1 ? 'es' : ''} registrada{user.total_imagenes !== 1 ? 's' : ''}
+                                {user.total_imagenes || 0} imagen{(user.total_imagenes || 0) !== 1 ? 'es' : ''} registrada{(user.total_imagenes || 0) !== 1 ? 's' : ''}
                             </Text>
 
                             {user.total_imagenes < 15 && (
@@ -439,7 +439,7 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
                             📧 Email: {user.email}
                         </Text>
                         <Text style={typography.body2}>
-                            📸 Total imágenes: {user.total_imagenes}
+                            📸 Total imágenes: {user.total_imagenes || 0}
                         </Text>
                         <Text style={typography.body2}>
                             ✅ Estado: {user.activo ? 'Activo' : 'Inactivo'}
