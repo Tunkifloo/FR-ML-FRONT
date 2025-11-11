@@ -42,7 +42,8 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera for facial recognition."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "jsEngine": "hermes",
     "extra": {
