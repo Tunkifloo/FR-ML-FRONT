@@ -74,6 +74,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
 
     const onRefresh = () => {
         setRefreshing(true);
+        setConfusionMatrix(null);
         loadAllStatistics();
     };
 
@@ -362,6 +363,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps):
                                     {confusionMatrix.image_base64 ? (
                                         <>
                                             <Image
+                                                key={confusionMatrix.image_base64}
                                                 source={{
                                                     uri: confusionMatrix.image_base64.startsWith('data:image')
                                                         ? confusionMatrix.image_base64
