@@ -96,6 +96,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 flash={flash}
                 ref={cameraRef}
                 onCameraReady={() => setIsReady(true)}
+                mirror={facing === 'front'}
             >
                 {/* Header con controles */}
                 <View style={styles.header}>

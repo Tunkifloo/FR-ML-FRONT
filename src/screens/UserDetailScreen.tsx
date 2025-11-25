@@ -103,7 +103,7 @@ export default function UserDetailScreen({ navigation, route }: UserDetailScreen
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: 'images' as const,
-                allowsEditing: true,
+                allowsEditing: false,
                 aspect: [1, 1],
                 quality: 0.8,
                 allowsMultipleSelection: true,

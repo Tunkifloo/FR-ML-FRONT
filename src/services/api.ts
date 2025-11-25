@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const BASE_URL = 'https://9cfb0e7d8663.ngrok-free.app/api/v1';
+const BASE_URL = 'http://192.168.0.220:8000/api/v1';
 
 class ApiService {
     private api: AxiosInstance;

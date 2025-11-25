@@ -67,9 +67,7 @@ export default function RecognitionScreen({ navigation }: RecognitionScreenProps
     );
 
     const takePicture = async () => {
-        if (!cameraRef.current || !isCameraReady || loading) {
-            return;
-        }
+        if (!cameraRef.current || !isCameraReady || loading) return;
 
         try {
             setLoading(true);
@@ -82,16 +80,12 @@ export default function RecognitionScreen({ navigation }: RecognitionScreenProps
             });
 
             if (photo && photo.uri) {
-                console.log('✅ Foto tomada:', photo.uri);
                 setImageUri(photo.uri);
-                setShowCamera(false); // Ocultar cámara mientras procesamos
+                setShowCamera(false);
                 await processImage(photo.uri);
-            } else {
-                throw new Error('No se pudo capturar la imagen');
             }
         } catch (err: any) {
-            console.error('❌ Error tomando foto:', err);
-            setError('Error al tomar la foto: ' + err.message);
+            console.error('Error:', err);
             setLoading(false);
         }
     };

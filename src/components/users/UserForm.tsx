@@ -122,28 +122,39 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     const pickImage = async () => {
         try {
-            if (imageUris.length >= USER_LIMITS.MAX_IMAGES) {
+            // 1. Calcular cuántos espacios quedan disponibles
+            const remainingSlots = USER_LIMITS.MAX_IMAGES - imageUris.length;
+
+            if (remainingSlots <= 0) {
                 Alert.alert('Límite alcanzado', `Máximo ${USER_LIMITS.MAX_IMAGES} imágenes permitidas`);
                 return;
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: 'images' as const,
-                allowsEditing: true,
-                aspect: [1, 1],
+                mediaTypes: 'images' as const, // O ImagePicker.MediaTypeOptions.Images
+                allowsEditing: false,          // Obligatorio false para selección múltiple
                 quality: 0.8,
+                allowsMultipleSelection: true, // Habilita la selección múltiple
+                selectionLimit: remainingSlots, // Limita según los espacios que le quedan al usuario
             });
 
-            if (!result.canceled && result.assets[0]) {
-                setImageUris(prev => [...prev, result.assets[0].uri]);
+            // 2. Procesar múltiples imágenes si no se canceló
+            if (!result.canceled && result.assets && result.assets.length > 0) {
 
-                // Limpiar error de imágenes
+                // Extraer todas las URIs nuevas
+                const newUris = result.assets.map(asset => asset.uri);
+
+                // 3. Añadir las nuevas URIs a las existentes
+                setImageUris(prev => [...prev, ...newUris]);
+
+                // Limpiar error de imágenes si existe
                 if (errors.images) {
                     setErrors(prev => ({ ...prev, images: '' }));
                 }
             }
         } catch (error) {
-            Alert.alert('Error', 'No se pudo seleccionar la imagen');
+            console.error(error);
+            Alert.alert('Error', 'No se pudieron seleccionar las imágenes');
         }
     };
 
